@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pez Dorado</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange:      #F47B20;
+  --orange-d:    #D96010;
+  --orange-soft: #FDE8D4;
+  --orange-pale: #FEF7F0;
+  --white:       #FFFFFF;
+  --off:         #FAFAF8;
+  --text:        #1C1410;
+  --muted:       #9C8A7A;
+  --border:      #EDE5DA;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--off);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  overflow-x: hidden;
+}
+.hero {
+  background: var(--white);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 4rem 2rem 5rem;
+  position: relative; overflow: hidden;
+}
+.hero-wave {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23FEF7F0' fill-opacity='1' d='M0,64L60,69.3C120,75,240,85,360,80C480,75,600,53,720,48C840,43,960,53,1080,58.7C1200,64,1320,64,1380,64L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z'/%3E%3C/svg%3E") no-repeat bottom;
+  background-size: cover; pointer-events: none;
+}
+.hero::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 280px; height: 280px; border-radius: 4px;
+  background: var(--orange-soft); opacity: 0.45;
+  transform: rotate(15deg); pointer-events: none;
+}
+.hero::after {
+  content: ''; position: absolute; bottom: 80px; left: -50px;
+  width: 180px; height: 180px; border-radius: 4px;
+  background: var(--orange-pale); opacity: 0.8;
+  transform: rotate(-8deg); pointer-events: none;
+}
+.hero-inner { position: relative; z-index: 1; }
+.fish-icon {
+  display: block; margin: 0 auto 1.25rem;
+  animation: float 4s ease-in-out infinite;
+  width: 72px; height: 72px;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-12px) rotate(4deg); }
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--orange); border: 1px solid var(--orange-soft);
+  background: var(--orange-pale); padding: 0.3rem 1rem;
+  border-radius: 2px; margin-bottom: 1.5rem;
+}
+.hero-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(4rem, 14vw, 8rem); font-weight: 400;
+  line-height: 0.85; color: var(--text);
+  margin-bottom: 0.5rem; letter-spacing: -0.02em;
+}
+.hero-title em { color: var(--orange); font-style: italic; }
+.hero-divider {
+  width: 48px; height: 3px;
+  background: linear-gradient(to right, var(--orange), var(--orange-soft));
+  border-radius: 0; margin: 1.5rem auto;
+}
+.hero-sub {
+  font-size: 0.95rem; color: var(--muted); font-weight: 300;
+  max-width: 320px; line-height: 1.7; letter-spacing: 0.02em;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin-top: 2rem; background: var(--orange); color: white;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 0.8rem 2rem; border-radius: 2px; border: none;
+  cursor: pointer; transition: all 0.25s; text-decoration: none;
+  box-shadow: 0 4px 20px rgba(244,123,32,0.3);
+}
+.hero-cta:hover { background: var(--orange-d); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(244,123,32,0.4); }
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem 1rem; overflow-x: auto; scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+.nav-inner { display: flex; gap: 0.25rem; min-width: max-content; justify-content: center; }
+.nav-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); background: transparent;
+  border: 1px solid transparent; border-radius: 2px;
+  padding: 0.35rem 0.9rem; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.nav-btn:hover { color: var(--orange); }
+.nav-btn.active { color: var(--white); background: var(--orange); }
+main { max-width: 820px; margin: 0 auto; padding: 2.5rem 1rem 9rem; }
+.specialty-banner {
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-d) 100%);
+  border-radius: 4px; padding: 1.75rem 1.5rem; color: white;
+  margin-bottom: 3rem; position: relative; overflow: hidden;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 8px 32px rgba(244,123,32,0.3);
+}
+.specialty-banner:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(244,123,32,0.4); }
+.specialty-banner::after {
+  content: ''; position: absolute; right: -30px; top: -30px;
+  width: 160px; height: 160px;
+  border: 2px solid rgba(255,255,255,0.15); border-radius: 4px;
+  transform: rotate(20deg); pointer-events: none;
+}
+.specialty-banner::before {
+  content: ''; position: absolute; bottom: -20px; right: 80px;
+  width: 100px; height: 100px; border-radius: 4px;
+  background: rgba(255,255,255,0.06); transform: rotate(-10deg); pointer-events: none;
+}
+.sb-star { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); opacity: 0.15; }
+.sb-tag {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  opacity: 0.9; margin-bottom: 0.4rem;
+}
+.sb-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; font-weight: 400; line-height: 1;
+  margin-bottom: 0.5rem; letter-spacing: -0.01em;
+}
+.sb-desc { font-size: 0.82rem; opacity: 0.85; line-height: 1.6; max-width: 380px; font-weight: 300; }
+.sb-price { display: inline-block; margin-top: 0.75rem; font-family: 'DM Serif Display', serif; font-size: 1.8rem; font-weight: 400; }
+.menu-section { margin-bottom: 3rem; }
+.section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.section-icon {
+  width: 40px; height: 40px; background: var(--orange-pale);
+  border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem; font-weight: 400; color: var(--text);
+  line-height: 1; letter-spacing: -0.01em;
+}
+.section-subtitle {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--orange); display: block; margin-bottom: 0.1rem;
+}
+.section-line { flex: 1; height: 1px; background: var(--border); }
+.contorno-note {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--orange-pale); border: 1px solid var(--orange-soft);
+  border-radius: 2px; padding: 0.4rem 0.75rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem; letter-spacing: 0.05em;
+  color: var(--orange-d); font-weight: 600; margin-bottom: 0.75rem;
+}
+.menu-items { display: flex; flex-direction: column; gap: 0.5rem; }
+.menu-item {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.875rem 1.1rem;
+  display: flex; align-items: center; gap: 0.85rem;
+  cursor: pointer; transition: all 0.18s; position: relative;
+}
+.menu-item:hover {
+  border-color: var(--orange-soft); background: var(--orange-pale);
+  transform: translateX(4px); box-shadow: 0 2px 12px rgba(244,123,32,0.08);
+}
+.item-icon { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--orange); }
+.item-info { flex: 1; }
+.item-name { font-weight: 500; font-size: 0.93rem; color: var(--text); letter-spacing: 0.01em; }
+.item-desc { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; line-height: 1.4; font-weight: 300; }
+.item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; flex-shrink: 0; }
+.item-price { font-family: 'DM Serif Display', serif; font-size: 1.25rem; font-weight: 400; color: var(--orange); }
+.add-btn {
+  width: 26px; height: 26px; background: var(--orange-soft);
+  color: var(--orange-d); border: none; border-radius: 2px;
+  font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s; line-height: 1;
+}
+.add-btn:hover { background: var(--orange); color: white; transform: scale(1.15); }
+.menu-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
+.menu-item-small {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.75rem 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: all 0.18s; gap: 0.5rem;
+}
+.menu-item-small:hover { border-color: var(--orange-soft); background: var(--orange-pale); }
+.menu-item-small .item-name { font-size: 0.85rem; }
+.menu-item-small .item-price { font-size: 1.1rem; }
+.menu-item-small-inner { display: flex; align-items: center; gap: 0.5rem; color: var(--orange); }
+.cart-fab {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200;
+  background: var(--orange); color: white; border: none; border-radius: 2px;
+  padding: 0.875rem 1.4rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.95rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; display: flex; align-items: center; gap: 0.6rem;
+  box-shadow: 0 4px 24px rgba(244,123,32,0.4);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  transform: translateY(120px); opacity: 0;
+}
+.cart-fab.visible { transform: translateY(0); opacity: 1; }
+.cart-fab:hover { background: var(--orange-d); transform: translateY(-3px); }
+.cart-count {
+  background: white; color: var(--orange); border-radius: 2px;
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700;
+}
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(28,20,16,0.5);
+  backdrop-filter: blur(6px); z-index: 300;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white); border-radius: 0;
+  width: 100%; max-width: 580px; max-height: 88vh; overflow-y: auto;
+  padding: 0 1.5rem 2rem; transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 0; margin: 1rem auto 1.25rem; }
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+}
+.modal-title {
+  font-family: 'DM Serif Display', serif; font-size: 1.6rem; font-weight: 400; color: var(--text);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.modal-close {
+  background: var(--off); border: 1px solid var(--border); color: var(--muted);
+  width: 32px; height: 32px; border-radius: 2px; cursor: pointer; font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.modal-close:hover { background: var(--orange); border-color: var(--orange); color: white; }
+.cart-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 0; border-bottom: 1px solid var(--border); }
+.cart-item-svg { color: var(--orange); flex-shrink: 0; }
+.cart-item-info { flex: 1; }
+.cart-item-name { font-weight: 500; font-size: 0.88rem; }
+.cart-item-price { color: var(--orange); font-family: 'DM Serif Display', serif; font-size: 1rem; font-weight: 400; }
+.qty-controls { display: flex; align-items: center; gap: 0.4rem; background: var(--off); border-radius: 2px; padding: 0.2rem 0.5rem; }
+.qty-btn {
+  width: 26px; height: 26px; border-radius: 2px; border: none;
+  background: white; color: var(--orange); font-size: 1rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.15s; line-height: 1;
+}
+.qty-btn:hover { background: var(--orange); color: white; }
+.qty-num { font-weight: 600; font-size: 0.9rem; min-width: 20px; text-align: center; }
+.cart-empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+.cart-empty-icon { margin-bottom: 0.75rem; display: flex; justify-content: center; }
+.cart-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 1.25rem; padding: 1rem 1.25rem;
+  background: var(--orange-pale); border-radius: 2px;
+}
+.cart-total-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+}
+.cart-total-amount { font-family: 'DM Serif Display', serif; font-size: 2rem; font-weight: 400; color: var(--orange); }
+.notes-area { margin-top: 1rem; }
+.notes-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.4rem; display: block;
+}
+.notes-input {
+  width: 100%; background: var(--off); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.88rem;
+  padding: 0.75rem; resize: none; height: 72px; outline: none; transition: border-color 0.2s;
+}
+.notes-input:focus { border-color: var(--orange); }
+.whatsapp-btn {
+  width: 100%; margin-top: 1rem; padding: 1rem; background: #25D366;
+  color: white; border: none; border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  transition: all 0.2s; box-shadow: 0 4px 16px rgba(37,211,102,0.25);
+}
+.whatsapp-btn:hover { background: #128C7E; transform: translateY(-2px); }
+footer {
+  background: var(--text); color: rgba(255,255,255,0.45);
+  text-align: center; padding: 2.5rem 1rem;
+  font-size: 0.8rem; letter-spacing: 0.03em; font-weight: 300;
+}
+footer .footer-name {
+  font-family: 'DM Serif Display', serif; font-size: 1.8rem; font-weight: 400;
+  color: var(--orange); display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; margin-bottom: 0.35rem;
+}
+.toast {
+  position: fixed; bottom: 5.5rem; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--text); color: white; padding: 0.6rem 1.4rem; border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.88rem; font-weight: 600;
+  letter-spacing: 0.05em; z-index: 400; opacity: 0; transition: all 0.3s;
+  white-space: nowrap; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width:480px) {
+  .hero-title { font-size: 4rem; }
+  .menu-items-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="ico-fish" viewBox="0 0 48 48">
+      <path d="M44 24c-6-8-14-13-22-13C10 11 2 18 2 24s8 13 20 13c4 0 8-1 11-2l4 5 1-7 4-2-4-2-1-7-4 5c-3-1-7-2-11-2-8 0-14-4-14-9s6-9 14-9c6 0 12 3 17 8z" fill="currentColor"/>
+      <circle cx="10" cy="23" r="2" fill="white"/>
+    </symbol>
+    <symbol id="ico-wave" viewBox="0 0 24 24">
+      <path d="M3 10c1.5-2 3-2 4.5 0S10.5 12 12 10s3-2 4.5 0S19.5 12 21 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M3 15c1.5-2 3-2 4.5 0S10.5 17 12 15s3-2 4.5 0S19.5 17 21 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-star" viewBox="0 0 24 24">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" stroke="currentColor" stroke-width="1.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-leaf" viewBox="0 0 24 24">
+      <path d="M17 8C8 10 5.9 16.17 3.82 19.82A11 11 0 0 0 12 21 9 9 0 0 0 21 12C21 9 19 6 17 8Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M3.82 19.82 12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-bowl" viewBox="0 0 24 24">
+      <path d="M3 11h18M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M9 5c0-1 .5-2 2-2.5M13 4c0-1 .5-2 2-2.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M8 19h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-drumstick" viewBox="0 0 24 24">
+      <path d="M15.5 8.5a5 5 0 1 1-7 7l-4.5 4.5a1.5 1.5 0 0 1-2-2L6.5 13.5a5 5 0 0 1 7-7z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-steak" viewBox="0 0 24 24">
+      <path d="M18 9a6 6 0 0 1-12 0c0-2 1-3.5 3-4.5C11 3.5 13 3 15 3.5c2 .5 3 2 3 5.5z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M6 9c0 4 2 7 6 9 4-2 6-5 6-9" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-shrimp" viewBox="0 0 24 24">
+      <path d="M12 3c3 0 6 2 6 5s-2 4-4 5c-1.5.7-2 2-2 3.5A2.5 2.5 0 0 1 9.5 19" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M9.5 19A2.5 2.5 0 0 1 7 16.5c0-1 .5-2 1.5-2.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M18 6c1-1 2.5-.5 2.5 1M16 4c.5-1.5 2-2 3-1" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-pasta" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="14" rx="8" ry="4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M4 14v2c0 2.2 3.6 4 8 4s8-1.8 8-4v-2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M9 10c0-2 1-4 3-4s3 2 3 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-rice" viewBox="0 0 24 24">
+      <path d="M12 3C7 3 3 6 3 10v7c0 2.2 4 4 9 4s9-1.8 9-4v-7c0-4-4-7-9-7z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M3 10c0 2.2 4 4 9 4s9-1.8 9-4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-drink" viewBox="0 0 24 24">
+      <path d="M5 3h14l-2 11a3 3 0 0 1-3 2H10a3 3 0 0 1-3-2L5 3z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M19 3l1 3H4L5 3" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M9 18v2M15 18v2M7 20h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-plate" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M7 12a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-cart" viewBox="0 0 24 24">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-avocado" viewBox="0 0 24 24">
+      <path d="M12 2C9 2 6 5 6 9c0 5 3 9 6 11 3-2 6-6 6-11 0-4-3-7-6-7z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <circle cx="12" cy="11" r="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-banana" viewBox="0 0 24 24">
+      <path d="M5 6c0 0 2-3 7-3 6 0 9 4 9 9 0 3-2 5-5 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M5 6c1 6 3 10 6 12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-lemon" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-drop" viewBox="0 0 24 24">
+      <path d="M12 2C12 2 4 10 4 15a8 8 0 0 0 16 0C20 10 12 2 12 2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-coconut" viewBox="0 0 24 24">
+      <circle cx="12" cy="13" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M12 6C10 4 7 3 5 4c1 3 4 5 7 5M12 6c2-2 5-3 7-2-1 3-4 5-7 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-egg" viewBox="0 0 24 24">
+      <path d="M12 3C8 3 5 8 5 13a7 7 0 0 0 14 0C19 8 16 3 12 3z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    </symbol>
+    <symbol id="ico-cheese" viewBox="0 0 24 24">
+      <path d="M2 14L12 4l10 10v6H2v-6z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-milk" viewBox="0 0 24 24">
+      <path d="M8 3h8l2 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7l2-4z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M6 7h12" stroke="currentColor" stroke-width="1.5"/>
+    </symbol>
+    <symbol id="ico-potato" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="12" rx="8" ry="6" stroke="currentColor" stroke-width="1.5" fill="none" transform="rotate(-15 12 12)"/>
+      <circle cx="9" cy="11" r="1" fill="currentColor"/><circle cx="14" cy="14" r="0.8" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-plant" viewBox="0 0 24 24">
+      <path d="M12 20V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M12 14c-3-3-5-7-2-10 3 0 5 3 2 10zM12 12c3-2 6-5 4-8-3 0-5 3-4 8z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M8 20h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-crab" viewBox="0 0 24 24">
+      <ellipse cx="12" cy="13" rx="5" ry="4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+      <path d="M7 13c-2 0-3-1-4-3M17 13c2 0 3-1 4-3M8 9c-1-2-1-4 1-5M16 9c1-2 1-4-1-5M9 17c-1 1-2 3-1 4M15 17c1 1 2 3 1 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="10" cy="12" r="1" fill="currentColor"/><circle cx="14" cy="12" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="ico-dot" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<section class="hero">
+  <div class="hero-wave"></div>
+  <div class="hero-inner">
+    <div class="hero-tag">
+      <svg width="12" height="12" style="color:var(--orange)"><use href="#ico-wave"/></svg>
+      Restaurante de Mar
+    </div>
+    <svg class="fish-icon" xmlns="http://www.w3.org/2000/svg" style="color:var(--orange)"><use href="#ico-fish"/></svg>
+    <h1 class="hero-title">Pez<br><em>Dorado</em></h1>
+    <div class="hero-divider"></div>
+    <p class="hero-sub">Sabores del mar en cada plato. Frescura, tradición y sabor auténtico.</p>
+    <a class="hero-cta" href="#menu-start">
+      Ver Menú
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </a>
+  </div>
+</section>
+
+<nav id="menu-start">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="goTo('entradas',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-leaf"/></svg> Entradas</button>
+    <button class="nav-btn" onclick="goTo('sopas',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-bowl"/></svg> Sopas</button>
+    <button class="nav-btn" onclick="goTo('ensaladas',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-leaf"/></svg> Ensaladas</button>
+    <button class="nav-btn" onclick="goTo('aves',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-drumstick"/></svg> Aves</button>
+    <button class="nav-btn" onclick="goTo('carnes',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-steak"/></svg> Carnes</button>
+    <button class="nav-btn" onclick="goTo('delmar',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-shrimp"/></svg> Del Mar</button>
+    <button class="nav-btn" onclick="goTo('pastas',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-pasta"/></svg> Pastas</button>
+    <button class="nav-btn" onclick="goTo('contornos',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-rice"/></svg> Contornos</button>
+    <button class="nav-btn" onclick="goTo('bebidas',this)"><svg width="13" height="13" style="color:inherit"><use href="#ico-drink"/></svg> Bebidas</button>
+  </div>
+</nav>
+
+<main>
+  <div class="specialty-banner" onclick="addSpecial()">
+    <svg class="sb-star" width="80" height="80" style="color:white"><use href="#ico-star"/></svg>
+    <div class="sb-tag"><svg width="11" height="11" style="color:white"><use href="#ico-star"/></svg> Especialidad de la Casa</div>
+    <div class="sb-name">Estrella Dorada</div>
+    <div class="sb-desc">Ceviche · Croquetas de pescado · Camarón rebosado · Cóctel de camarón · Camarón al Termidor · Camarón al ajillo</div>
+    <div class="sb-price">$35.00</div>
+  </div>
+
+  <section class="menu-section" id="entradas">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-leaf"/></svg></div>
+      <div><span class="section-subtitle">Starters</span><h2 class="section-title">Entradas</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items" id="items-entradas"></div>
+  </section>
+
+  <section class="menu-section" id="sopas">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-bowl"/></svg></div>
+      <div><span class="section-subtitle">Soups</span><h2 class="section-title">Sopas y Cremas</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items" id="items-sopas"></div>
+  </section>
+
+  <section class="menu-section" id="ensaladas">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-leaf"/></svg></div>
+      <div><span class="section-subtitle">Salads</span><h2 class="section-title">Ensaladas</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items" id="items-ensaladas"></div>
+  </section>
+
+  <section class="menu-section" id="aves">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-drumstick"/></svg></div>
+      <div><span class="section-subtitle">Chicken</span><h2 class="section-title">Aves</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="contorno-note"><svg width="13" height="13" style="color:var(--orange-d)"><use href="#ico-plate"/></svg> Incluye 3 contornos: ensalada, yuca y tajadas</div>
+    <div class="menu-items" id="items-aves"></div>
+  </section>
+
+  <section class="menu-section" id="carnes">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-steak"/></svg></div>
+      <div><span class="section-subtitle">Meats</span><h2 class="section-title">Carnes</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="contorno-note"><svg width="13" height="13" style="color:var(--orange-d)"><use href="#ico-plate"/></svg> Incluye 3 contornos: ensalada, yuca y tajadas</div>
+    <div class="menu-items" id="items-carnes"></div>
+  </section>
+
+  <section class="menu-section" id="delmar">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-shrimp"/></svg></div>
+      <div><span class="section-subtitle">Seafood</span><h2 class="section-title">Del Mar</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="contorno-note"><svg width="13" height="13" style="color:var(--orange-d)"><use href="#ico-plate"/></svg> Incluye 3 contornos: ensalada, yuca y tajadas</div>
+    <div class="menu-items" id="items-delmar"></div>
+  </section>
+
+  <section class="menu-section" id="pastas">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-pasta"/></svg></div>
+      <div><span class="section-subtitle">Pasta</span><h2 class="section-title">Pastas</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items" id="items-pastas"></div>
+  </section>
+
+  <section class="menu-section" id="contornos">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-rice"/></svg></div>
+      <div><span class="section-subtitle">Sides</span><h2 class="section-title">Contornos</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items-grid" id="items-contornos"></div>
+  </section>
+
+  <section class="menu-section" id="bebidas">
+    <div class="section-header">
+      <div class="section-icon"><svg width="20" height="20" style="color:var(--orange)"><use href="#ico-drink"/></svg></div>
+      <div><span class="section-subtitle">Drinks</span><h2 class="section-title">Bebidas</h2></div>
+      <div class="section-line"></div>
+    </div>
+    <div class="menu-items" id="items-bebidas"></div>
+  </section>
+</main>
+
+<footer>
+  <span class="footer-name">
+    <svg width="22" height="22" style="color:var(--orange)"><use href="#ico-fish"/></svg>
+    Pez Dorado
+  </span>
+  <p>Restaurante de Mar · Pedidos por WhatsApp</p>
+  <p style="margin-top:0.3rem;display:flex;align-items:center;justify-content:center;gap:0.35rem;">
+    <svg width="13" height="13" style="color:var(--orange);opacity:.7"><use href="#ico-wave"/></svg>
+    Frescura en cada plato
+  </p>
+</footer>
+
+<button class="cart-fab" id="cartFab" onclick="openCart()">
+  <svg width="18" height="18"><use href="#ico-cart"/></svg>
+  Mi Pedido
+  <span class="cart-count" id="cartCount">0</span>
+</button>
+
+<div class="modal-overlay" id="modalOverlay" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <svg width="22" height="22" style="color:var(--orange)"><use href="#ico-fish"/></svg>
+        Mi Pedido
+      </h2>
+      <button class="modal-close" onclick="closeCart()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="cartItems"></div>
+    <div id="cartFooter"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ICONS = {
+  banana:'#ico-banana', lemon:'#ico-lemon', shrimp:'#ico-shrimp',
+  bowl:'#ico-bowl', crab:'#ico-crab', wave:'#ico-wave',
+  avocado:'#ico-avocado', leaf:'#ico-leaf',
+  drumstick:'#ico-drumstick', steak:'#ico-steak',
+  fish:'#ico-fish', pasta:'#ico-pasta', rice:'#ico-rice',
+  milk:'#ico-milk', potato:'#ico-potato', cheese:'#ico-cheese',
+  plant:'#ico-plant', drop:'#ico-drop', drink:'#ico-drink',
+  coconut:'#ico-coconut', star:'#ico-star', egg:'#ico-egg', dot:'#ico-dot',
+};
+function svgIcon(id, size=22) {
+  const href = ICONS[id] || '#ico-dot';
+  return `<svg width="${size}" height="${size}" style="color:var(--orange)"><use href="${href}"/></svg>`;
+}
+
+const MENU = {
+  entradas: [
+    { name:"Canasta de Plátano", price:6,   icon:"banana" },
+    { name:"Ceviche",            price:10,  icon:"lemon" },
+    { name:"Cóctel de Camarón",  price:9,   icon:"shrimp" },
+  ],
+  sopas: [
+    { name:"Crema de Chipichipi", price:4,  icon:"bowl" },
+    { name:"Chupe de Camarón",    price:8,  icon:"shrimp" },
+    { name:"Sopa de Mariscos",    price:8,  icon:"wave" },
+    { name:"Sopa de Cangrejo",    price:5,  icon:"crab" },
+  ],
+  ensaladas: [
+    { name:"Aguacate Relleno",    price:6,   icon:"avocado" },
+    { name:"Ensalada de Aguacate",price:4,   icon:"avocado" },
+    { name:"Ensalada de Camarón", price:7,   icon:"shrimp" },
+    { name:"Ensalada César",      price:4,   icon:"leaf" },
+    { name:"Ensalada Coleslaw",   price:1.5, icon:"leaf" },
+    { name:"Ensalada Rusa",       price:2,   icon:"leaf" },
+  ],
+  aves: [
+    { name:"Churrasco de Pollo",  price:8, icon:"drumstick", contorno:true },
+    { name:"Golden Blu",          price:9, icon:"drumstick", contorno:true },
+    { name:"Milanesa de Pollo",   price:7, icon:"drumstick", contorno:true },
+    { name:"Pollo a la Plancha",  price:7, icon:"drumstick", contorno:true },
+    { name:"Pollo Frito",         price:7, icon:"drumstick", contorno:true },
+    { name:"Pollo Light",         price:7, icon:"leaf",      contorno:true },
+    { name:"Tenders de Pollo",    price:7, icon:"drumstick", contorno:true },
+  ],
+  carnes: [
+    { name:"Bistec",              price:5,  icon:"steak", contorno:true },
+    { name:"Lomo 300gr",          price:8,  icon:"steak", contorno:true },
+    { name:"Lomo 300gr Especial", price:12, icon:"steak", contorno:true },
+    { name:"Lomo Salteado",       price:9,  icon:"steak", contorno:true },
+    { name:"Puerco",              price:5,  icon:"steak", contorno:true },
+  ],
+  delmar: [
+    { name:"Arroz a la Marinera",    price:12, icon:"shrimp", contorno:true },
+    { name:"Camarón Rebosado",       price:8,  icon:"shrimp", contorno:true },
+    { name:"Camarón al Termidor",    price:10, icon:"shrimp", contorno:true },
+    { name:"Cazuela de Mariscos",    price:12, icon:"wave",   contorno:true },
+    { name:"Camarón al Ajillo",      price:8,  icon:"shrimp", contorno:true },
+    { name:"Curvina Grande",         price:14, icon:"fish",   contorno:true },
+    { name:"Curvina Mediana",        price:8,  icon:"fish",   contorno:true },
+    { name:"Servicio de Curvina",    price:7,  icon:"fish",   contorno:true },
+    { name:"Bocachico",              price:6,  icon:"fish",   contorno:true },
+    { name:"Bocachico Relleno",      price:11, icon:"fish",   contorno:true },
+    { name:"Filete Relleno Especial",price:12, icon:"fish",   contorno:true },
+    { name:"Filet a la Plancha",     price:8,  icon:"fish",   contorno:true },
+    { name:"Filet al Ajillo",        price:10, icon:"fish",   contorno:true },
+    { name:"Filet a la Meniel",      price:12, icon:"fish",   contorno:true },
+    { name:"Filet de Churrasco",     price:10, icon:"fish",   contorno:true },
+    { name:"Huevas",                 price:9,  icon:"egg",    contorno:true },
+    { name:"La Taberna Dorada",      price:27, icon:"star",   contorno:true },
+    { name:"Labranche",              price:17, icon:"fish",   contorno:true },
+    { name:"Mojito en Coco",         price:7,  icon:"coconut",contorno:true },
+    { name:"Pargo Rojo",             price:10, icon:"fish",   contorno:true },
+    { name:"Robalo Filet",           price:5,  icon:"fish",   contorno:true },
+  ],
+  pastas: [
+    { name:"Pasta con Camarones", price:7,  icon:"pasta" },
+    { name:"Pasta con Filet",     price:7,  icon:"pasta" },
+    { name:"Pasta con Lomo",      price:10, icon:"pasta" },
+    { name:"Pasta con Pollo",     price:7,  icon:"pasta" },
+    { name:"Tallarín Mixto",      price:12, icon:"pasta" },
+  ],
+  contornos: [
+    { name:"Arroz",      price:1,   icon:"rice" },
+    { name:"Nata",       price:1,   icon:"milk" },
+    { name:"Papas",      price:2,   icon:"potato" },
+    { name:"Patacón",    price:1.5, icon:"banana" },
+    { name:"Queso Frito",price:2,   icon:"cheese" },
+    { name:"Tajadas",    price:2,   icon:"banana" },
+    { name:"Yuca Frita", price:1.5, icon:"plant" },
+  ],
+  bebidas: [
+    { name:"Agua / Agua de Coco / Coca-Cola / Pepsi", price:null, icon:"drop",  noPrice:true },
+    { name:"Jugos Naturales — Fresa, Limón, Mora, Parchita, Piña", price:2,   icon:"drink" },
+    { name:"Gaseosas Golden — 7up, Piña, Colita, Orange, Uvita",   price:1.5, icon:"drink" },
+  ],
+};
+
+const WHATSAPP = "+584126911048";
+let cart = {};
+const fmt = p => p !== null && p !== undefined ? "$" + Number(p).toFixed(2) : "";
+
+function renderMenus() {
+  ["entradas","sopas","ensaladas","aves","carnes","delmar","pastas","bebidas"].forEach(cat => {
+    const el = document.getElementById("items-" + cat);
+    if (!el) return;
+    el.innerHTML = MENU[cat].map((item, i) => `
+      <div class="menu-item" onclick="addToCart('${cat}',${i})">
+        <div class="item-icon">${svgIcon(item.icon)}</div>
+        <div class="item-info">
+          <div class="item-name">${item.name}</div>
+          ${item.contorno ? `<div class="item-desc">Incluye ensalada, yuca y tajadas</div>` : ""}
+        </div>
+        <div class="item-right">
+          ${item.noPrice ? '<span style="font-family:Barlow Condensed,sans-serif;font-size:0.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Consultar</span>' : `<div class="item-price">${fmt(item.price)}</div>`}
+          <button class="add-btn" onclick="event.stopPropagation();addToCart('${cat}',${i})">+</button>
+        </div>
+      </div>`).join("");
+  });
+  const cEl = document.getElementById("items-contornos");
+  if (cEl) {
+    cEl.innerHTML = MENU.contornos.map((item, i) => `
+      <div class="menu-item-small" onclick="addToCart('contornos',${i})">
+        <div class="menu-item-small-inner">${svgIcon(item.icon,18)}<span class="item-name">${item.name}</span></div>
+        <span class="item-price">${fmt(item.price)}</span>
+      </div>`).join("");
+  }
+}
+
+function addSpecial() {
+  const key = "special_estrella";
+  if (!cart[key]) cart[key] = { name:"Estrella Dorada", icon:"star", price:35, qty:0 };
+  cart[key].qty++; updateCartUI(); showToast("Estrella Dorada agregada");
+}
+
+function addToCart(cat, idx) {
+  const key = cat + "_" + idx;
+  const item = MENU[cat][idx];
+  if (item.noPrice) { showToast("Consultar precio al restaurante"); return; }
+  if (!cart[key]) cart[key] = { ...item, qty:0 };
+  cart[key].qty++; updateCartUI(); showToast(item.name + " agregado");
+}
+
+function updateCartUI() {
+  const total = Object.values(cart).reduce((s,i) => s + i.qty, 0);
+  document.getElementById("cartCount").textContent = total;
+  const fab = document.getElementById("cartFab");
+  total > 0 ? fab.classList.add("visible") : fab.classList.remove("visible");
+}
+
+function openCart() { renderCart(); document.getElementById("modalOverlay").classList.add("open"); }
+function closeCart() { document.getElementById("modalOverlay").classList.remove("open"); }
+function bgClose(e) { if (e.target === document.getElementById("modalOverlay")) closeCart(); }
+
+function renderCart() {
+  const cEl = document.getElementById("cartItems");
+  const fEl = document.getElementById("cartFooter");
+  const items = Object.entries(cart).filter(([,i]) => i.qty > 0);
+  if (!items.length) {
+    cEl.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">${svgIcon('fish',48)}</div><p style="color:var(--muted);font-size:0.9rem;">Tu carrito está vacío<br>¡Agrega tus platillos!</p></div>`;
+    fEl.innerHTML = ""; return;
+  }
+  cEl.innerHTML = items.map(([key, item]) => `
+    <div class="cart-item">
+      <span class="cart-item-svg">${svgIcon(item.icon)}</span>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">${fmt(item.price * item.qty)}</div>
+      </div>
+      <div class="qty-controls">
+        <button class="qty-btn" onclick="changeQty('${key}',-1)">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${key}',1)">+</button>
+      </div>
+    </div>`).join("");
+  const total = items.reduce((s,[,i]) => s + i.price * i.qty, 0);
+  fEl.innerHTML = `
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total del Pedido</span>
+      <span class="cart-total-amount">${fmt(total)}</span>
+    </div>
+    <div class="notes-area">
+      <span class="notes-label">Notas especiales</span>
+      <textarea class="notes-input" id="orderNotes" placeholder="Alergias, sin cebolla, preferencias..."></textarea>
+    </div>
+    <button class="whatsapp-btn" onclick="sendWA()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar Pedido por WhatsApp
+    </button>`;
+}
+
+function changeQty(key, d) {
+  if (!cart[key]) return;
+  cart[key].qty += d;
+  if (cart[key].qty <= 0) delete cart[key];
+  updateCartUI(); renderCart();
+}
+
+function sendWA() {
+  const items = Object.values(cart).filter(i => i.qty > 0);
+  if (!items.length) return;
+  const notes = document.getElementById("orderNotes")?.value || "";
+  const total = items.reduce((s,i) => s + i.price * i.qty, 0);
+  let msg = "🐟 *Pedido — Pez Dorado*\n\n";
+  items.forEach(i => { msg += `• *${i.name}* x${i.qty} — ${fmt(i.price * i.qty)}\n`; });
+  msg += `\n💰 *Total: ${fmt(total)}*`;
+  if (notes) msg += `\n\n📝 *Notas:* ${notes}`;
+  window.open("https://wa.me/" + WHATSAPP.replace(/\D/g,"") + "?text=" + encodeURIComponent(msg), "_blank");
+}
+
+function goTo(id, btn) {
+  document.getElementById(id)?.scrollIntoView({ behavior:"smooth", block:"start" });
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
+
+renderMenus();
+</script>
+</body>
+</html>
