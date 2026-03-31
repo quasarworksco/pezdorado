@@ -183,11 +183,7 @@ main { max-width: 820px; margin: 0 auto; padding: 2.5rem 1rem 9rem; }
   background: var(--white); border: 1px solid var(--border);
   border-radius: 4px; padding: 0.875rem 1.1rem;
   display: flex; align-items: center; gap: 0.85rem;
-  cursor: pointer; transition: all 0.18s; position: relative;
-}
-.menu-item:hover {
-  border-color: var(--orange-soft); background: var(--orange-pale);
-  transform: translateX(4px); box-shadow: 0 2px 12px rgba(244,123,32,0.08);
+  position: relative;
 }
 .item-icon { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--orange); }
 .item-info { flex: 1; }
@@ -712,7 +708,7 @@ function renderMenus() {
     const el = document.getElementById("items-" + cat);
     if (!el) return;
     el.innerHTML = MENU[cat].map((item, i) => `
-      <div class="menu-item" onclick="addToCart('${cat}',${i})">
+      <div class="menu-item">
         <div class="item-icon">${svgIcon(item.icon)}</div>
         <div class="item-info">
           <div class="item-name">${item.name}</div>
@@ -720,7 +716,7 @@ function renderMenus() {
         </div>
         <div class="item-right">
           ${item.noPrice ? '<span style="font-family:Barlow Condensed,sans-serif;font-size:0.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Consultar</span>' : `<div class="item-price">${fmt(item.price)}</div>`}
-          <button class="add-btn" onclick="event.stopPropagation();addToCart('${cat}',${i})">+</button>
+          <button class="add-btn" onclick="addToCart('${cat}',${i})">+</button>
         </div>
       </div>`).join("");
   });
