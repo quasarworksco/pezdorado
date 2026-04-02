@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pez Dorado — Sistema de Meseros</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --od:#b94a0a;--om:#e05c12;--ob:#f57c2b;
+  --ol:#fdecd8;--op:#fff7f0;--mid:#f9d0a8;
+  --cream:#fdf6ee;--bm:#7a3810;
+  --tx:#2c1200;--tm:#8a5a3c;--tl:#c49070;
+  --w:#fff;
+  --gr:#1a7a4a;--gl:#e6f4ed;--gm:#a8d5bc;
+  --rd:#b91c1c;--rl:#fdecea;
+  --gy:#6b6b6b;--gyl:#f3f3f3;
+  --b:rgba(180,80,10,0.18);--bs:rgba(180,80,10,0.35);
+  --s1:0 2px 10px rgba(180,80,10,0.1);
+  --s2:0 4px 24px rgba(180,80,10,0.15);
+  --s3:0 8px 40px rgba(180,80,10,0.2);
+  --r1:8px;--r2:12px;--r3:18px;--r4:26px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--tx);height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--od) 0%,var(--om) 60%,var(--ob) 100%);padding:0 13px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 3px 16px rgba(180,80,10,0.35);position:relative;overflow:hidden;gap:8px}
+.hdr::after{content:'';position:absolute;top:-28px;right:-28px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.07);pointer-events:none}
+.hlogo{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.hlogo-t{font-family:'Playfair Display',serif;font-size:15px;color:#fff;line-height:1}
+.hlogo-s{font-size:9px;font-weight:300;color:rgba(255,255,255,0.68);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
+.hcenter{flex:1;display:flex;justify-content:center}
+.hbadge{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.28);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:none;gap:5px;align-items:center}
+.hbadge.on{display:flex}
+.hbadge .dot{width:5px;height:5px;background:#a8ff78;border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hnav{display:flex;gap:4px;flex-shrink:0;z-index:1}
+.nbtn{background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.26);color:#fff;font-size:10px;font-weight:600;padding:4px 9px;border-radius:14px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.nbtn:hover{background:rgba(255,255,255,0.28)}
+.nbtn.on{background:rgba(255,255,255,0.9);color:var(--od)}
+.nbadge{background:var(--od);color:#fff;border-radius:9px;font-size:9px;font-weight:700;padding:1px 4px;min-width:15px;text-align:center}
+.nbtn.on .nbadge{background:var(--om)}
+
+/* SCREENS */
+.pg{display:none;flex:1;flex-direction:column;overflow:hidden}
+.pg.on{display:flex}
+.sc{display:none;flex:1;flex-direction:column;overflow:hidden}
+.sc.on{display:flex}
+
+/* ── SETUP ── */
+.swrap{flex:1;overflow-y:auto;padding:16px 13px 10px;display:flex;flex-direction:column;gap:13px}
+.eban{background:linear-gradient(135deg,var(--od) 0%,var(--ob) 100%);border-radius:var(--r3);padding:14px 15px;position:relative;overflow:hidden;box-shadow:var(--s2);transition:transform .15s,box-shadow .15s}
+.eban:hover{transform:translateY(-1px);box-shadow:var(--s3)}
+.bgf{position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:.1;pointer-events:none}
+.elb{font-size:9px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:2px;margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.enm{font-family:'Playfair Display',serif;font-size:20px;color:#fff;line-height:1;margin-bottom:3px}
+.eds{font-size:10px;color:rgba(255,255,255,0.78);margin-bottom:6px}
+.epr{font-size:18px;font-weight:700;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.2)}
+.scard{background:var(--w);border:1px solid var(--b);border-radius:var(--r3);padding:13px;box-shadow:var(--s1)}
+.slbl{font-size:9px;font-weight:600;color:var(--tl);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mbtn{padding:7px 3px;border:1px solid var(--bs);border-radius:var(--r1);background:var(--op);font-size:11px;font-weight:500;cursor:pointer;color:var(--bm);text-align:center;transition:all .15s;font-family:'DM Sans',sans-serif;position:relative}
+.mbtn:hover{background:var(--ol);border-color:var(--ob)}
+.mbtn.sel{background:var(--om);border-color:var(--od);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(180,80,10,0.35)}
+.mbtn.ocp::after{content:'';position:absolute;top:3px;right:3px;width:6px;height:6px;background:var(--om);border-radius:50%;border:1.5px solid rgba(255,255,255,0.9)}
+.mbtn.ocp{border-color:var(--om);background:var(--ol)}
+.prow{display:flex;align-items:center;gap:12px}
+.qbtn{width:34px;height:34px;border:1.5px solid var(--bs);border-radius:50%;background:var(--op);font-size:18px;cursor:pointer;color:var(--od);display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'DM Sans',sans-serif;line-height:1}
+.qbtn:hover{background:var(--ol);border-color:var(--om)}
+.qval{font-size:23px;font-weight:600;min-width:32px;text-align:center;color:var(--od)}
+.prow > span{font-size:12px;color:var(--tm)}
+.sbtn{margin:4px 13px 13px;background:linear-gradient(135deg,var(--od),var(--ob));color:#fff;border:none;border-radius:var(--r4);padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 4px 18px rgba(180,80,10,0.4);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.sbtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(180,80,10,0.5)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+/* ── ORDER ── */
+.ptabs{display:flex;overflow-x:auto;background:var(--w);border-bottom:1.5px solid var(--bs);flex-shrink:0}
+.ptabs::-webkit-scrollbar{height:0}
+.ptab{flex-shrink:0;padding:8px 13px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;min-width:74px;text-align:center}
+.ptab .ptn{font-size:11px;font-weight:600;color:var(--tm)}
+.ptab .pts{font-size:9px;color:var(--tl);margin-top:1px}
+.ptab.on{border-bottom-color:var(--om)}
+.ptab.on .ptn{color:var(--od)}
+.ptab.on .pts{color:var(--ob)}
+.omn{flex:1;display:flex;overflow:hidden}
+.mpnl{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.cscr{display:flex;gap:5px;overflow-x:auto;padding:8px 10px 6px;flex-shrink:0;background:var(--cream);border-bottom:1px solid var(--b)}
+.cscr::-webkit-scrollbar{height:0}
+.ctab{flex-shrink:0;padding:4px 10px;border:1.5px solid var(--bs);border-radius:20px;font-size:10px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tm);transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.ctab.on{background:var(--om);border-color:var(--od);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(180,80,10,0.3)}
+.cnote{margin:5px 10px;padding:5px 9px;background:var(--ol);border-left:3px solid var(--ob);border-radius:0 var(--r1) var(--r1) 0;font-size:10px;color:var(--bm);display:none;align-items:center;gap:4px}
+.iscr{flex:1;overflow-y:auto;padding:6px 10px 10px}
+.irow{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:5px;background:var(--w);border:1px solid var(--b);border-radius:var(--r2);cursor:pointer;transition:all .15s;gap:8px;box-shadow:var(--s1)}
+.irow:hover{border-color:var(--ob);box-shadow:0 3px 14px rgba(180,80,10,0.14);transform:translateX(2px)}
+.irow:active{transform:scale(.98)}
+.iinf{flex:1}
+.inm{font-size:12px;font-weight:500;color:var(--tx);line-height:1.3}
+.isub{font-size:9px;color:var(--tl);margin-top:2px}
+.irgt{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ipr{font-size:12px;font-weight:600;color:var(--od)}
+.ipr.ask{font-size:10px;color:var(--tl);font-style:italic}
+.qbdg{background:var(--om);color:#fff;border-radius:50%;width:20px;height:20px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(180,80,10,0.4)}
+.acir{width:21px;height:21px;border:1.5px solid var(--bs);border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--op);transition:all .15s;flex-shrink:0}
+.irow:hover .acir{background:var(--ol);border-color:var(--om)}
+.tcir{width:21px;height:21px;border:1.5px solid var(--bs);border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ol);flex-shrink:0}
+
+/* CART */
+.cpnl{width:162px;flex-shrink:0;border-left:1px solid var(--bs);overflow-y:auto;background:var(--op);display:flex;flex-direction:column}
+.chdr{padding:8px 10px 7px;font-size:9px;font-weight:600;color:var(--tl);text-transform:uppercase;letter-spacing:1.4px;border-bottom:1px solid var(--b);flex-shrink:0;background:var(--ol);display:flex;align-items:center;gap:4px}
+.cbdy{flex:1;overflow-y:auto;padding:6px}
+.cplbl{font-size:9px;font-weight:700;color:var(--od);text-transform:uppercase;letter-spacing:.7px;margin:6px 0 4px;padding-bottom:3px;border-bottom:1px dashed var(--mid);display:flex;align-items:center;gap:3px}
+.cplbl:first-child{margin-top:0}
+.cit{display:flex;gap:3px;margin-bottom:5px;align-items:flex-start}
+.citinf{flex:1}
+.citnm{font-size:10px;color:var(--tx);line-height:1.3}
+.citpr{font-size:9px;color:var(--tm);margin-top:1px}
+.cctl{display:flex;align-items:center;gap:2px;flex-shrink:0;margin-top:1px}
+.mbt{width:15px;height:15px;border:1px solid var(--bs);border-radius:3px;background:var(--w);font-size:11px;cursor:pointer;color:var(--od);display:flex;align-items:center;justify-content:center;line-height:1;font-family:'DM Sans',sans-serif;transition:background .1s}
+.mbt:hover{background:var(--ol)}
+.cemp{font-size:10px;color:var(--tl);text-align:center;padding:16px 6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cft{padding:7px;border-top:1px solid var(--bs);flex-shrink:0;background:var(--ol)}
+.cfr{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px}
+.cfr.big{font-weight:700;font-size:12px;color:var(--od);margin-top:3px}
+.cfr span:first-child{color:var(--tm)}
+.cfr.big span:first-child{color:var(--tx)}
+.gcbtn{width:100%;margin-top:6px;background:linear-gradient(135deg,var(--od),var(--ob));color:#fff;border:none;border-radius:var(--r2);padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px}
+.gcbtn:hover{opacity:.9}
+
+/* ── RESUMEN PEDIDO (guardar sin propina) ── */
+.rswrap{flex:1;overflow-y:auto;padding:13px}
+.rsbanner{background:linear-gradient(135deg,var(--od),var(--ob));border-radius:var(--r3);padding:15px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--s2)}
+.rsbanner-l{color:#fff}
+.rsbanner-mesa{font-family:'Playfair Display',serif;font-size:22px}
+.rsbanner-meta{font-size:11px;opacity:.8;margin-top:2px}
+.rsbanner-r{text-align:right}
+.rsbanner-total{font-family:'Playfair Display',serif;font-size:28px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.2)}
+.rsbanner-sub{font-size:10px;color:rgba(255,255,255,0.75);margin-top:2px}
+.rscard{background:var(--w);border:1px solid var(--b);border-radius:var(--r3);margin-bottom:11px;overflow:hidden;box-shadow:var(--s1)}
+.rsch{padding:10px 14px 8px;border-bottom:1px solid var(--b);background:var(--op);display:flex;align-items:center;gap:6px}
+.rsct{font-size:10px;font-weight:700;color:var(--od);text-transform:uppercase;letter-spacing:.9px}
+.rscb{padding:10px 14px}
+.pblk{padding-bottom:9px;margin-bottom:9px;border-bottom:1px dashed var(--bs)}
+.pblk:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+.pbhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.pbnm{font-size:12px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:4px}
+.pbsb{font-size:12px;font-weight:700;color:var(--od)}
+.pit{display:flex;justify-content:space-between;font-size:11px;color:var(--tm);padding:1px 0}
+.notas-inp{width:100%;padding:8px 10px;border:1.5px solid var(--bs);border-radius:var(--r2);font-size:12px;font-family:'DM Sans',sans-serif;color:var(--tx);background:var(--op);outline:none;resize:none;transition:border-color .15s;margin-top:5px}
+.notas-inp:focus{border-color:var(--om);background:var(--w)}
+.save-ord-btn{width:100%;margin-top:10px;padding:13px;border:none;border-radius:var(--r4);background:linear-gradient(135deg,var(--gr),#2daa6a);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 3px 14px rgba(26,122,74,0.4);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.save-ord-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 20px rgba(26,122,74,0.5)}
+.save-ord-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.sstatus{text-align:center;font-size:11px;margin-top:6px;min-height:15px;font-style:italic}
+.sstatus.ok{color:var(--gr)}
+.sstatus.err{color:var(--rd)}
+.sstatus.ld{color:var(--tm)}
+
+/* ── COBRO SCREEN ── */
+.cowrap{flex:1;overflow-y:auto;padding:13px}
+.co-info-bar{background:var(--op);border:1px solid var(--b);border-radius:var(--r2);padding:10px 13px;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.co-info-mesa{font-family:'Playfair Display',serif;font-size:16px;color:var(--od)}
+.co-info-sub{font-size:10px;color:var(--tm);margin-top:1px}
+.co-subtotal{font-size:13px;font-weight:700;color:var(--tx)}
+.cocard{background:var(--w);border:1px solid var(--b);border-radius:var(--r3);margin-bottom:11px;overflow:hidden;box-shadow:var(--s1)}
+.coch{padding:10px 14px 8px;border-bottom:1px solid var(--b);background:var(--op);display:flex;align-items:center;gap:6px}
+.coct{font-size:10px;font-weight:700;color:var(--od);text-transform:uppercase;letter-spacing:.9px}
+.cocb{padding:11px 14px}
+.pgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px}
+.pbtn{padding:8px 3px;border:1.5px solid var(--bs);border-radius:var(--r1);font-size:11px;font-weight:500;cursor:pointer;background:var(--op);color:var(--tm);transition:all .15s;font-family:'DM Sans',sans-serif;text-align:center}
+.pbtn:hover{background:var(--ol)}
+.pbtn.on{background:var(--om);border-color:var(--od);color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(180,80,10,0.3)}
+.pnote{font-size:11px;color:var(--bm);min-height:16px;font-style:italic;margin-top:4px}
+.tot-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--tm)}
+.tot-row.grand{font-weight:700;font-size:15px;color:var(--tx);border-top:1.5px solid var(--bs);padding-top:9px;margin-top:5px}
+.total-big{font-family:'Playfair Display',serif;font-size:34px;color:var(--od);text-align:center;padding:7px 0 3px;text-shadow:0 1px 8px rgba(180,80,10,0.15)}
+.divrow{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.divlbl{font-size:12px;color:var(--tm)}
+.divamt{font-family:'Playfair Display',serif;font-size:26px;color:var(--ob);margin-top:7px}
+.cobrar-btn{width:100%;margin-top:10px;padding:13px;border:none;border-radius:var(--r4);background:linear-gradient(135deg,var(--gr),#2daa6a);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 3px 14px rgba(26,122,74,0.4);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px}
+.cobrar-btn:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(26,122,74,0.5)}
+
+/* ── GESTIÓN PEDIDOS ── */
+.gwrap{flex:1;overflow-y:auto;padding:12px}
+.gtbar{display:flex;gap:6px;margin-bottom:11px;flex-wrap:wrap;align-items:center}
+.fbtn{padding:5px 11px;border:1.5px solid var(--bs);border-radius:20px;font-size:10px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tm);font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.fbtn.on{font-weight:700}
+.fbtn[data-f="todos"].on{background:var(--op);border-color:var(--om);color:var(--od)}
+.fbtn[data-f="abierto"].on{background:#fff3e0;border-color:#f59e0b;color:#92400e}
+.fbtn[data-f="pagado"].on{background:var(--gl);border-color:var(--gr);color:var(--gr)}
+.fbtn[data-f="cerrado"].on{background:var(--gyl);border-color:#999;color:#444}
+.rfbtn{margin-left:auto;padding:5px 9px;border:1.5px solid var(--bs);border-radius:20px;font-size:10px;font-weight:500;cursor:pointer;background:var(--w);color:var(--tm);font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;gap:4px}
+.rfbtn:hover{background:var(--ol);color:var(--od)}
+.pcard{background:var(--w);border:1px solid var(--b);border-radius:var(--r3);margin-bottom:9px;overflow:hidden;box-shadow:var(--s1);transition:box-shadow .15s}
+.pcard:hover{box-shadow:var(--s2)}
+.pch{padding:10px 13px;display:flex;align-items:center;justify-content:space-between;gap:9px;border-bottom:1px solid var(--b)}
+.pch.abierto{background:#fff8f0;border-left:4px solid var(--om)}
+.pch.pagado{background:var(--gl);border-left:4px solid var(--gr)}
+.pch.cerrado{background:var(--gyl);border-left:4px solid #999}
+.pcmesa{font-family:'Playfair Display',serif;font-size:16px;color:var(--tx)}
+.pcmeta{font-size:9px;color:var(--tm);margin-top:1px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.pctot{font-size:14px;font-weight:700;color:var(--od);flex-shrink:0}
+.ebdg{font-size:9px;font-weight:700;padding:2px 8px;border-radius:11px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.ebdg.abierto{background:#fff3e0;color:#92400e;border:1px solid #f59e0b}
+.ebdg.pagado{background:var(--gl);color:var(--gr);border:1px solid var(--gm)}
+.ebdg.cerrado{background:var(--gyl);color:#555;border:1px solid #ccc}
+.pcb{padding:10px 13px}
+.pitl{font-size:10px;color:var(--tm);margin-bottom:9px;line-height:1.7}
+.pitp{margin-bottom:3px}
+.pitp strong{color:var(--od);font-size:9px;text-transform:uppercase;letter-spacing:.4px}
+.pacts{display:flex;gap:5px;flex-wrap:wrap}
+.pab{flex:1;min-width:76px;padding:6px 8px;border:1.5px solid;border-radius:var(--r2);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.pab:hover{filter:brightness(.94)}
+.pab.cobrar{border-color:var(--om);background:var(--op);color:var(--od)}
+.pab.pay{border-color:var(--gr);background:var(--gl);color:var(--gr)}
+.pab.cls{border-color:#999;background:var(--gyl);color:#555}
+.pab.open{border-color:var(--ob);background:#fff8f0;color:var(--od)}
+.pnotas{font-size:9px;color:var(--tm);font-style:italic;margin-top:4px;padding-top:4px;border-top:1px dashed var(--b)}
+.gemp{text-align:center;padding:38px 20px;color:var(--tl);display:flex;flex-direction:column;align-items:center;gap:10px}
+.gld{text-align:center;padding:28px;color:var(--tm);font-size:12px}
+
+/* ACTION BAR */
+.abar{padding:8px 12px;border-top:1px solid var(--bs);display:flex;gap:7px;flex-shrink:0;background:var(--w)}
+.abtn{flex:1;padding:10px;border:1.5px solid var(--bs);border-radius:var(--r4);background:var(--op);font-size:12px;font-weight:500;cursor:pointer;color:var(--tm);font-family:'DM Sans',sans-serif;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.abtn:hover{background:var(--ol);color:var(--od)}
+.pbtn2{flex:2;padding:10px;border:none;border-radius:var(--r4);background:linear-gradient(135deg,var(--od),var(--ob));color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 3px 14px rgba(180,80,10,0.4);transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.pbtn2:hover{opacity:.92;transform:translateY(-1px)}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(60,20,0,0.5);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
+.moverlay.on{display:flex}
+.mbox{background:var(--w);border-radius:var(--r4);padding:20px 17px;width:100%;max-width:305px;box-shadow:var(--s3);animation:mIn .2s ease-out}
+@keyframes mIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.mico{width:36px;height:36px;background:var(--ol);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.mtit{font-family:'Playfair Display',serif;font-size:16px;color:var(--tx);margin-bottom:3px}
+.msub{font-size:11px;color:var(--tm);margin-bottom:13px}
+.miwrap{position:relative;margin-bottom:13px}
+.miwrap .pfx{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:var(--om)}
+.minp{width:100%;padding:9px 10px 9px 23px;border:1.5px solid var(--bs);border-radius:var(--r2);font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;color:var(--tx);outline:none;background:var(--op);transition:border-color .15s}
+.minp:focus{border-color:var(--om);background:var(--w)}
+.macts{display:flex;gap:7px}
+.mcanc{flex:1;padding:9px;border:1.5px solid var(--bs);border-radius:var(--r2);background:var(--op);color:var(--tm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif}
+.mconf{flex:2;padding:9px;border:none;border-radius:var(--r2);background:linear-gradient(135deg,var(--od),var(--ob));color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 10px rgba(180,80,10,0.35);display:flex;align-items:center;justify-content:center;gap:5px}
+
+/* TOAST */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--tx);color:#fff;padding:9px 16px;border-radius:var(--r4);font-size:12px;font-weight:500;z-index:300;transition:transform .3s;white-space:nowrap;pointer-events:none;display:flex;align-items:center;gap:6px;box-shadow:var(--s3)}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--gr)}
+.toast.er{background:var(--rd)}
+
+/* FOOTER */
+.footer{flex-shrink:0;background:var(--tx);padding:5px 14px;display:flex;align-items:center;justify-content:center;gap:6px}
+.footer-txt{font-size:9px;font-weight:500;color:rgba(255,255,255,0.45);letter-spacing:.4px;white-space:nowrap}
+.footer-brand{font-size:9px;font-weight:700;color:rgba(255,255,255,0.65);letter-spacing:.3px}
+.footer-sep{font-size:9px;color:rgba(255,255,255,0.2)}
+.footer-link{font-size:9px;font-weight:500;color:var(--ob);text-decoration:none;letter-spacing:.2px;opacity:.8}
+.footer-link:hover{opacity:1}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--mid);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- SVG DEFS -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden"><defs>
+<symbol id="ifish" viewBox="0 0 40 28"><path d="M36 14s-6-10-18-10C8 4 2 12 2 14c0 0 3 4 7 6L7 24h5l2-3c1.5.5 3 .7 4 .7C30 21.7 36 14 36 14z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="11" cy="12" r="2" fill="currentColor"/><path d="M33 7L39 4 37 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+<symbol id="itable" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="3" rx="1.5" fill="currentColor"/><rect x="5" y="9" width="2.2" height="9" rx="1.1" fill="currentColor" opacity=".7"/><rect x="16.8" y="9" width="2.2" height="9" rx="1.1" fill="currentColor" opacity=".7"/></symbol>
+<symbol id="ipeople" viewBox="0 0 26 22"><circle cx="9" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M1 21c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="7" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M18 15c2.5.5 4.5 2.8 5 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="istar" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></symbol>
+<symbol id="iinfo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="12" y1="8" x2="12" y2="8.1" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="iplus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+<symbol id="itag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/></symbol>
+<symbol id="icart" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8"/><path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="ireceipt" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v18l3-3 2 3 2-3 2 3 2-3 3 3V4a2 2 0 00-2-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="8" y1="9" x2="16" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="17" x2="12" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+<symbol id="iperson" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="ipct" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="6.5" cy="6.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.5" cy="17.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="isplit" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="3.5" cy="6" r="1.5" fill="currentColor"/><circle cx="3.5" cy="12" r="1.5" fill="currentColor"/><circle cx="3.5" cy="18" r="1.5" fill="currentColor"/></symbol>
+<symbol id="isheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="15" x2="21" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="3" x2="9" y2="21" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="iarr" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="12 5 19 12 12 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="iarrl" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="12 19 5 12 12 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="iref" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="ifork" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7H8a2 2 0 00-2 2v1a2 2 0 002 2h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 2v5a3 3 0 01-3 3v12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="ichk" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="ix" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="ilist" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+<symbol id="inote" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="17" x2="12" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+<symbol id="icash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="6" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.5"/></symbol>
+<symbol id="itri" viewBox="0 0 8 12"><polygon points="0,0 8,6 0,12" fill="currentColor"/></symbol>
+<symbol id="iedit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hlogo">
+    <svg width="32" height="22" color="#fff"><use href="#ifish"/></svg>
+    <div><div class="hlogo-t">Pez Dorado</div><div class="hlogo-s">Restaurante Familiar · Norte</div></div>
+  </div>
+  <div class="hcenter">
+    <div class="hbadge" id="hbadge"><span class="dot"></span><span id="badge-txt"></span></div>
+  </div>
+  <div class="hnav">
+    <button class="nbtn on" id="nav-pos" onclick="switchPg('pos')">
+      <svg width="11" height="11" color="currentColor"><use href="#ifork"/></svg>Pedido
+    </button>
+    <button class="nbtn" id="nav-gest" onclick="switchPg('gest')">
+      <svg width="11" height="11" color="currentColor"><use href="#ilist"/></svg>Gestión
+      <span class="nbadge" id="nav-cnt">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ PAGE POS ══ -->
+<div class="pg on" id="pg-pos">
+
+  <!-- SC: SETUP -->
+  <div class="sc on" id="sc-setup">
+    <div class="swrap">
+      <div class="eban">
+        <svg class="bgf" width="110" height="77" color="white"><use href="#ifish"/></svg>
+        <div class="elb"><svg width="9" height="9" color="rgba(255,255,255,0.9)"><use href="#istar"/></svg>Especialidad de la Casa</div>
+        <div class="enm">Estrella Dorada</div>
+        <div class="eds">Ceviche · Croquetas · Camarón rebosado · Cóctel · Termidor · Ajillo</div>
+        <div class="epr">$35.00</div>
+      </div>
+      <div class="scard">
+        <div class="slbl"><svg width="12" height="12" color="currentColor"><use href="#itable"/></svg>Selecciona la mesa</div>
+        <div class="mgrid" id="mesa-grid"></div>
+      </div>
+      <div class="scard">
+        <div class="slbl"><svg width="13" height="11" color="currentColor"><use href="#ipeople"/></svg>Número de personas</div>
+        <div class="prow">
+          <button class="qbtn" onclick="chP(-1)">−</button>
+          <span class="qval" id="pval">2</span>
+          <button class="qbtn" onclick="chP(1)">+</button>
+          <span>personas en la mesa</span>
+        </div>
+      </div>
+    </div>
+    <button class="sbtn" id="start-btn" onclick="startOrder()" disabled>
+      <svg width="14" height="14" color="#fff"><use href="#ifork"/></svg>
+      Abrir Sesión de Pedido
+      <svg width="14" height="14" color="#fff"><use href="#iarr"/></svg>
+    </button>
+  </div>
+
+  <!-- SC: ORDER -->
+  <div class="sc" id="sc-order">
+    <div class="ptabs" id="ptabs"></div>
+    <div class="omn">
+      <div class="mpnl">
+        <div class="cscr" id="ctabs"></div>
+        <div class="cnote" id="cnote">
+          <svg width="11" height="11" color="var(--bm)" style="flex-shrink:0"><use href="#iinfo"/></svg>
+          <span id="cnote-txt"></span>
+        </div>
+        <div class="iscr" id="items-list"></div>
+      </div>
+      <div class="cpnl">
+        <div class="chdr"><svg width="11" height="11" color="currentColor"><use href="#icart"/></svg>Pedidos mesa</div>
+        <div class="cbdy" id="cart-body"></div>
+        <div class="cft" id="cart-ft"></div>
+      </div>
+    </div>
+    <div class="abar">
+      <button class="abtn" onclick="goSetup()"><svg width="12" height="12" color="currentColor"><use href="#iarrl"/></svg>Mesa</button>
+      <button class="pbtn2" onclick="goResumen()">
+        <svg width="12" height="12" color="#fff"><use href="#ireceipt"/></svg>
+        Revisar y Guardar
+        <svg width="12" height="12" color="#fff"><use href="#iarr"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- SC: RESUMEN + GUARDAR (sin propina) -->
+  <div class="sc" id="sc-resumen">
+    <div class="rswrap">
+      <!-- banner -->
+      <div class="rsbanner" id="rs-banner"></div>
+
+      <!-- detalle por persona -->
+      <div class="rscard">
+        <div class="rsch"><svg width="12" height="12" color="var(--od)"><use href="#iperson"/></svg><span class="rsct">Detalle por persona</span></div>
+        <div class="rscb" id="rs-personas"></div>
+      </div>
+
+      <!-- notas -->
+      <div class="rscard">
+        <div class="rsch"><svg width="12" height="12" color="var(--od)"><use href="#inote"/></svg><span class="rsct">Notas del mesero</span></div>
+        <div class="rscb">
+          <textarea class="notas-inp" id="notas-inp" rows="2" placeholder="Alergias, peticiones especiales..."></textarea>
+        </div>
+      </div>
+
+      <button class="save-ord-btn" id="save-btn" onclick="guardarPedido()">
+        <svg width="15" height="15" color="#fff"><use href="#isheet"/></svg>
+        Registrar pedido
+      </button>
+      <div class="sstatus" id="sstatus"></div>
+    </div>
+    <div class="abar">
+      <button class="abtn" onclick="goOrder()"><svg width="12" height="12" color="currentColor"><use href="#iarrl"/></svg>Editar</button>
+      <button class="pbtn2" onclick="newSession()"><svg width="12" height="12" color="#fff"><use href="#iref"/></svg>Nueva sesión</button>
+    </div>
+  </div>
+
+  <!-- SC: COBRO (propina + division — se abre desde Gestión) -->
+  <div class="sc" id="sc-cobro">
+    <div class="cowrap">
+      <div class="co-info-bar" id="co-info-bar"></div>
+
+      <!-- detalle items -->
+      <div class="cocard">
+        <div class="coch"><svg width="12" height="12" color="var(--od)"><use href="#iperson"/></svg><span class="coct">Consumo</span></div>
+        <div class="cocb" id="co-personas"></div>
+      </div>
+
+      <!-- propina -->
+      <div class="cocard">
+        <div class="coch"><svg width="12" height="12" color="var(--od)"><use href="#ipct"/></svg><span class="coct">Propina (opcional)</span></div>
+        <div class="cocb">
+          <div class="pgrid">
+            <button class="pbtn on" onclick="setProp(0)">Sin propina</button>
+            <button class="pbtn" onclick="setProp(10)">10%</button>
+            <button class="pbtn" onclick="setProp(15)">15%</button>
+            <button class="pbtn" onclick="setProp(18)">18%</button>
+            <button class="pbtn" onclick="setProp(20)">20%</button>
+          </div>
+          <div class="pnote" id="co-pnote"></div>
+        </div>
+      </div>
+
+      <!-- total -->
+      <div class="cocard">
+        <div class="coch"><svg width="12" height="12" color="var(--od)"><use href="#icash"/></svg><span class="coct">Total a cobrar</span></div>
+        <div class="cocb">
+          <div id="co-totals"></div>
+          <div class="total-big" id="co-total-big">$0.00</div>
+        </div>
+      </div>
+
+      <!-- dividir -->
+      <div class="cocard">
+        <div class="coch"><svg width="12" height="12" color="var(--od)"><use href="#isplit"/></svg><span class="coct">Dividir cuenta</span></div>
+        <div class="cocb">
+          <div class="divrow">
+            <button class="qbtn" onclick="chDiv(-1)">−</button>
+            <span class="qval" id="div-val">1</span>
+            <button class="qbtn" onclick="chDiv(1)">+</button>
+            <span class="divlbl">personas → cada una paga:</span>
+          </div>
+          <div class="divamt" id="div-amt">—</div>
+        </div>
+      </div>
+
+      <button class="cobrar-btn" onclick="cobrarPedido()">
+        <svg width="15" height="15" color="#fff"><use href="#ichk"/></svg>
+        Marcar como Pagado y Cerrar
+      </button>
+    </div>
+    <div class="abar">
+      <button class="abtn" onclick="volverAGestion()"><svg width="12" height="12" color="currentColor"><use href="#iarrl"/></svg>Volver</button>
+      <button class="pbtn2" onclick="soloEditar()">
+        <svg width="12" height="12" color="#fff"><use href="#iedit"/></svg>
+        Editar pedido
+      </button>
+    </div>
+  </div>
+
+</div><!-- end pg-pos -->
+
+<!-- ══ PAGE GESTIÓN ══ -->
+<div class="pg" id="pg-gest">
+  <div class="gwrap">
+    <div class="gtbar">
+      <button class="fbtn on" data-f="todos" onclick="setFilt('todos')">Todos</button>
+      <button class="fbtn" data-f="abierto" onclick="setFilt('abierto')">Abiertos</button>
+      <button class="fbtn" data-f="pagado" onclick="setFilt('pagado')">Pagados</button>
+      <button class="fbtn" data-f="cerrado" onclick="setFilt('cerrado')">Cerrados</button>
+      <button class="rfbtn" onclick="cargarPedidos()">
+        <svg width="11" height="11" color="currentColor"><use href="#iref"/></svg>Actualizar
+      </button>
+    </div>
+    <div id="ped-list"></div>
+  </div>
+</div>
+
+<!-- MODAL precio -->
+<div class="moverlay" id="pmodal">
+  <div class="mbox">
+    <div class="mico"><svg width="17" height="17" color="var(--om)"><use href="#itag"/></svg></div>
+    <div class="mtit" id="mod-nm">Agua Mineral</div>
+    <div class="msub">Ingresa el precio para agregar al pedido</div>
+    <div class="miwrap">
+      <span class="pfx">$</span>
+      <input class="minp" type="number" id="mod-inp" placeholder="0.00" min="0" step="0.50">
+    </div>
+    <div class="macts">
+      <button class="mcanc" onclick="closeModal()">Cancelar</button>
+      <button class="mconf" onclick="confirmModal()">
+        <svg width="12" height="12" color="#fff"><use href="#iplus"/></svg>Agregar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="footer">
+  <span class="footer-brand">FoodTech by DGP GROUP USA</span>
+  <span class="footer-sep">·</span>
+  <span class="footer-txt">Todos los derechos reservados</span>
+  <span class="footer-sep">·</span>
+  <a class="footer-link" href="https://foodtechdgp.com" target="_blank">foodtechdgp.com</a>
+</div>
+
+<script>
+const SHEET = 'https://script.google.com/macros/s/AKfycbzon91cR7geGfMpjdd4nXmHf7S4BVzm7ogZgTSY1ECrBNzV7tsAClfju_c2jLojrAdu/exec';
+const LSK = 'pzd_pedidos';
+const LSS = 'pzd_session';
+
+/* ── MENU ── */
+const MENU = {
+  "Estrella Dorada":{note:"Especialidad de la casa — combo completo",items:[
+    {n:"Estrella Dorada (combo completo)",p:35.00,note:"Ceviche · Croquetas · Camarón rebosado · Cóctel · Termidor · Ajillo"}
+  ]},
+  "Entradas":{note:null,items:[{n:"Canasta de Plátano",p:6},{n:"Ceviche",p:10},{n:"Cóctel de Camarón",p:9}]},
+  "Sopas y Cremas":{note:null,items:[{n:"Crema de Chipichipi",p:4},{n:"Chupe de Camarón",p:8},{n:"Sopa de Mariscos",p:8},{n:"Sopa de Cangrejo",p:5}]},
+  "Ensaladas":{note:null,items:[{n:"Aguacate Relleno",p:8},{n:"Ensalada de Aguacate",p:4},{n:"Ensalada de Camarón",p:7},{n:"Ensalada César",p:4},{n:"Ensalada Coleslaw",p:1.5},{n:"Ensalada Rusa",p:2}]},
+  "Pastas":{note:null,items:[{n:"Pasta con Camarones",p:7},{n:"Pasta con Filet",p:7},{n:"Pasta con Lomo",p:10},{n:"Pasta con Pollo",p:7},{n:"Tallarín Mixto",p:12}]},
+  "Aves":{note:"Incluye ensalada, yuca y tajadas",items:[{n:"Churrasco de Pollo",p:8},{n:"Cordon Bleu",p:9},{n:"Milanesa de Pollo",p:7},{n:"Pollo a la Plancha",p:6},{n:"Pollo Frito",p:7},{n:"Pollo Light",p:7},{n:"Tenders de Pollo",p:7}]},
+  "Carnes":{note:"Incluye ensalada, yuca y tajadas",items:[{n:"Bistec",p:5},{n:"Lomo 300gr",p:8},{n:"Lomo 300gr Especial",p:12},{n:"Lomo Salteado",p:9},{n:"Puerco",p:5}]},
+  "Del Mar":{note:"Incluye ensalada, yuca y tajadas",items:[{n:"Arroz a la Marinera",p:12},{n:"Camarón Rebosado",p:8},{n:"Camarón al Termidor",p:10},{n:"Cazuela de Mariscos",p:12},{n:"Camarón al Ajillo",p:8},{n:"Curvina Grande",p:14},{n:"Curvina Mediana",p:8},{n:"Servicio de Curvina",p:7},{n:"Bocachico",p:6},{n:"Bocachico Relleno",p:11},{n:"Filet Relleno Especial",p:12},{n:"Filet a la Plancha",p:8},{n:"Filet al Ajillo",p:10},{n:"Filet a la Meniel",p:12},{n:"Filet de Churrasco",p:10},{n:"Huevas",p:9},{n:"La Taberna Dorada",p:27},{n:"Lebranche",p:12},{n:"Mojito en Coco",p:7},{n:"Pargo Rojo",p:10},{n:"Robalo Filet",p:10}]},
+  "Contornos":{note:"Guarniciones adicionales",items:[{n:"Arroz",p:1},{n:"Nata",p:1},{n:"Papas",p:2},{n:"Patacón",p:1.5},{n:"Queso Frito",p:2},{n:"Tajadas",p:2},{n:"Yuca Frita",p:1.5}]},
+  "Bebidas":{note:"Jugos: Fresa, Limón, Mora, Parchita, Piña",items:[{n:"Jugo Natural",p:2},{n:"Gaseosa Golden",p:1.5,note:"7up, Piña, Colita, Orange, Uvita"},{n:"Agua Mineral",p:null,note:"Toca para ingresar precio"},{n:"Agua de Coco",p:null,note:"Toca para ingresar precio"},{n:"Coca-Cola / Pepsi",p:null,note:"Toca para ingresar precio"}]}
+};
+
+/* ── STATE ── */
+let S = {mesa:null,personas:2,curP:0,orders:{},cat:"Estrella Dorada"};
+let cobroPedido = null; // pedido abierto en pantalla de cobro
+let coPropina = 0;
+let coDivider = 1;
+let pedidos = [];
+let filtro = 'todos';
+let pendItem = null;
+let curPage = 'pos';
+
+/* ── SVG HELPER ── */
+const si=(id,w,h,c)=>`<svg width="${w}" height="${h}" color="${c}" style="flex-shrink:0"><use href="#${id}"/></svg>`;
+
+/* ── LOCAL STORAGE ── */
+function saveS(){ try{localStorage.setItem(LSS,JSON.stringify(S));}catch(e){} }
+function loadS(){
+  try{
+    const d=JSON.parse(localStorage.getItem(LSS)||'null');
+    if(d&&d.mesa){S=d;return true;}
+  }catch(e){}
+  return false;
+}
+function savePeds(list){ try{localStorage.setItem(LSK,JSON.stringify(list));}catch(e){} }
+function loadPeds(){ try{return JSON.parse(localStorage.getItem(LSK)||'[]');}catch(e){return [];} }
+function addPedLocal(p){ const l=loadPeds();const i=l.findIndex(x=>x.id===p.id);if(i>=0)l[i]=p;else l.unshift(p);savePeds(l); }
+function updPedLocal(id,fields){ const l=loadPeds();const p=l.find(x=>x.id===id);if(p){Object.assign(p,fields);p.actualizado=now();}savePeds(l); }
+function now(){ return new Date().toLocaleString('es',{hour12:false}); }
+
+/* ── MESA GRID ── */
+const mg=document.getElementById('mesa-grid');
+for(let i=1;i<=15;i++){
+  const b=document.createElement('button');
+  b.className='mbtn';b.id='m'+i;b.textContent='Mesa '+i;b.onclick=()=>selMesa(i);
+  mg.appendChild(b);
+}
+function updMesas(){
+  const oc=new Set(loadPeds().filter(p=>p.estado==='abierto').map(p=>String(p.mesa)));
+  for(let i=1;i<=15;i++){
+    const b=document.getElementById('m'+i);
+    if(b)b.classList.toggle('ocp',oc.has(String(i)));
+  }
+}
+
+/* ── SETUP ── */
+function selMesa(n){
+  S.mesa=n;
+  document.querySelectorAll('.mbtn').forEach((b,i)=>b.classList.toggle('sel',i+1===n));
+  document.getElementById('start-btn').disabled=false;
+}
+function chP(d){ S.personas=Math.max(1,Math.min(12,S.personas+d));document.getElementById('pval').textContent=S.personas; }
+function startOrder(){
+  if(!S.mesa)return;
+  S.orders={};for(let i=0;i<S.personas;i++)S.orders[i]=[];
+  S.curP=0;saveS();showBadge();
+  renderPtabs();renderCtabs();renderItems();renderCart();
+  showSc('sc-order');
+}
+function showBadge(){
+  document.getElementById('hbadge').classList.add('on');
+  document.getElementById('badge-txt').textContent=`Mesa ${S.mesa} · ${S.personas} pers.`;
+}
+
+/* ── PERSONA TABS ── */
+function renderPtabs(){
+  const c=document.getElementById('ptabs');c.innerHTML='';
+  for(let i=0;i<S.personas;i++){
+    const sub=pTot(i);const t=document.createElement('div');
+    t.className='ptab'+(i===S.curP?' on':'');
+    t.innerHTML=`<div class="ptn">Persona ${i+1}</div><div class="pts">${sub>0?'$'+sub.toFixed(2):'sin pedido'}</div>`;
+    t.onclick=()=>{S.curP=i;renderPtabs();renderItems();renderCart();saveS();};
+    c.appendChild(t);
+  }
+}
+function renderCtabs(){
+  const c=document.getElementById('ctabs');c.innerHTML='';
+  Object.keys(MENU).forEach(cat=>{
+    const t=document.createElement('div');
+    t.className='ctab'+(cat===S.cat?' on':'');
+    t.textContent=cat;t.onclick=()=>{S.cat=cat;renderCtabs();renderItems();};
+    c.appendChild(t);
+  });
+}
+function renderItems(){
+  const cat=MENU[S.cat];
+  const ne=document.getElementById('cnote'),nt=document.getElementById('cnote-txt');
+  if(cat.note){nt.textContent=cat.note;ne.style.display='flex';}else ne.style.display='none';
+  const g=document.getElementById('items-list');g.innerHTML='';
+  cat.items.forEach(item=>{
+    const qty=getQ(S.curP,item.n),isC=item.p===null;
+    const d=document.createElement('div');d.className='irow';
+    const ph=isC?`<span class="ipr ask">consultar</span>`:`<span class="ipr">$${item.p.toFixed(2)}</span>`;
+    const ri=isC?`<div class="tcir">${si('itag','11','11','var(--om)')}</div>`:qty>0?`<div class="qbdg">${qty}</div>`:`<div class="acir">${si('iplus','11','11','var(--om)')}</div>`;
+    d.innerHTML=`<div class="iinf"><div class="inm">${item.n}</div>${item.note?`<div class="isub">${item.note}</div>`:''}</div><div class="irgt">${ph}${ri}</div>`;
+    d.onclick=()=>isC?openModal(item):addItem({...item});
+    g.appendChild(d);
+  });
+}
+function getQ(p,n){return(S.orders[p]||[]).filter(x=>x.n===n).length;}
+function addItem(item){S.orders[S.curP].push({...item});saveS();renderItems();renderCart();renderPtabs();}
+function removeItem(p,n){const a=S.orders[p];const i=a.map(x=>x.n).lastIndexOf(n);if(i>=0)a.splice(i,1);saveS();renderItems();renderCart();renderPtabs();}
+
+function renderCart(){
+  const body=document.getElementById('cart-body'),ft=document.getElementById('cart-ft');
+  let html='',grand=0,has=false;
+  for(let i=0;i<S.personas;i++){
+    const its=S.orders[i]||[];if(!its.length)continue;has=true;
+    const gr={};its.forEach(it=>{gr[it.n]=gr[it.n]||{...it,qty:0};gr[it.n].qty++;});
+    const sub=pTot(i);grand+=sub;const isCur=i===S.curP;
+    html+=`<div class="cplbl">${isCur?si('itri','4','8','var(--ob)'):si('iperson','8','8','var(--mid)')} Persona ${i+1}</div>`;
+    Object.values(gr).forEach(g=>{
+      html+=`<div class="cit"><div class="citinf"><div class="citnm">${g.qty>1?g.qty+'× ':''}${g.n}</div><div class="citpr">$${(g.p*g.qty).toFixed(2)}</div></div>`;
+      if(isCur)html+=`<div class="cctl"><button class="mbt" onclick="removeItem(${i},'${g.n.replace(/'/g,"\\'")}')">−</button><button class="mbt" onclick="addItem({n:'${g.n.replace(/'/g,"\\'")}',p:${g.p}})">+</button></div>`;
+      html+='</div>';
+    });
+  }
+  body.innerHTML=has?html:`<div class="cemp">${si('icart','24','24','var(--mid)')}<span>Agrega platos</span></div>`;
+  ft.innerHTML=has?`<div class="cfr"><span>Total mesa</span><span></span></div><div class="cfr big"><span>Subtotal</span><span>$${grand.toFixed(2)}</span></div><button class="gcbtn" onclick="goResumen()">${si('ireceipt','10','10','#fff')} Revisar ${si('iarr','10','10','#fff')}</button>`:'';
+}
+
+/* ── TOTALS ── */
+function pTot(p){return(S.orders[p]||[]).reduce((s,i)=>s+(i.p||0),0);}
+function allTot(){return Object.keys(S.orders).reduce((s,p)=>s+pTot(+p),0);}
+
+/* ── RESUMEN SCREEN (registrar pedido sin propina) ── */
+function goResumen(){
+  showSc('sc-resumen');
+  const sub=allTot();
+  // Banner
+  document.getElementById('rs-banner').innerHTML=`
+    <div class="rsbanner-l">
+      <div class="rsbanner-mesa">Mesa ${S.mesa}</div>
+      <div class="rsbanner-meta">${si('ipeople','12','11','rgba(255,255,255,0.75)')} ${S.personas} personas</div>
+    </div>
+    <div class="rsbanner-r">
+      <div class="rsbanner-total">$${sub.toFixed(2)}</div>
+      <div class="rsbanner-sub">subtotal sin propina</div>
+    </div>`;
+  // Personas
+  let ph='';
+  for(let i=0;i<S.personas;i++){
+    const its=S.orders[i]||[];if(!its.length)continue;
+    const gr={};its.forEach(it=>{gr[it.n]=gr[it.n]||{...it,qty:0};gr[it.n].qty++;});
+    ph+=`<div class="pblk"><div class="pbhd"><span class="pbnm">${si('iperson','11','11','var(--om)')} Persona ${i+1}</span><span class="pbsb">$${pTot(i).toFixed(2)}</span></div>`;
+    Object.values(gr).forEach(g=>{ph+=`<div class="pit"><span>${g.qty>1?g.qty+'× ':''}${g.n}</span><span>$${(g.p*g.qty).toFixed(2)}</span></div>`;});
+    ph+='</div>';
+  }
+  document.getElementById('rs-personas').innerHTML=ph||'<span style="font-size:11px;color:var(--tl)">Sin platos agregados.</span>';
+  // Reset save btn
+  const btn=document.getElementById('save-btn');
+  btn.disabled=false;btn.innerHTML=`${si('isheet','14','14','#fff')} Registrar pedido`;
+  document.getElementById('sstatus').textContent='';
+  document.getElementById('sstatus').className='sstatus';
+  document.getElementById('notas-inp').value='';
+}
+
+/* ── SHEETS HELPER ── */
+async function sheetPost(payload){
+  const url=SHEET+'?data='+encodeURIComponent(JSON.stringify(payload));
+  const r=await fetch(url);
+  const text=await r.text();
+  try{return JSON.parse(text);}
+  catch(e){throw new Error('Respuesta inesperada del servidor');}
+}
+
+async function guardarPedido(){
+  const sub=allTot();
+  const notas=document.getElementById('notas-inp').value.trim();
+  const btn=document.getElementById('save-btn');
+  const st=document.getElementById('sstatus');
+  btn.disabled=true;
+  st.textContent='Enviando a Google Sheets...';st.className='sstatus ld';
+  const id=`PD-${S.mesa}-${Date.now()}`;
+  const ped={
+    id,fecha:now(),mesa:S.mesa,personas:S.personas,
+    items:JSON.parse(JSON.stringify(S.orders)),
+    subtotal:sub,propina_pct:0,propina_monto:0,total:sub,
+    estado:'abierto',notas,actualizado:now()
+  };
+  addPedLocal(ped);updMesas();updNavCnt();
+  try{
+    const d=await sheetPost({action:'crear_pedido',...ped});
+    if(d.ok){
+      st.textContent='Pedido registrado en Sheets.';st.className='sstatus ok';
+      btn.innerHTML=`${si('ichk','14','14','#fff')} Registrado`;
+      showToast('Pedido guardado en Sheets','ok');
+    } else throw new Error(d.error||'Error en Sheets');
+  }catch(e){
+    console.error('Sheets error:',e);
+    st.textContent='Error: '+e.message;st.className='sstatus err';
+    btn.disabled=false;
+    showToast('Error al guardar en Sheets','er');
+  }
+}
+
+/* ── COBRO SCREEN ── */
+function abrirCobro(ped){
+  cobroPedido=ped;coPropina=0;coDivider=1;
+  // Reset propina btns
+  document.querySelectorAll('.pbtn').forEach(b=>{const t=b.textContent.trim();b.classList.toggle('on',t==='Sin propina');});
+  document.getElementById('div-val').textContent='1';
+  // Info bar
+  document.getElementById('co-info-bar').innerHTML=`
+    <div>
+      <div class="co-info-mesa">Mesa ${ped.mesa}</div>
+      <div class="co-info-sub">${si('ipeople','11','10','var(--tm)')} ${ped.personas} personas · ${ped.fecha||''}</div>
+    </div>
+    <div class="co-subtotal">Subtotal: $${parseFloat(ped.subtotal||0).toFixed(2)}</div>`;
+  // Personas detalle
+  const items=ped.items||{};let ph='';
+  Object.entries(items).forEach(([per,its])=>{
+    if(!its||!its.length)return;
+    const gr={};its.forEach(it=>{gr[it.n]=gr[it.n]||{...it,qty:0};gr[it.n].qty++;});
+    ph+=`<div class="pblk"><div class="pbhd"><span class="pbnm">${si('iperson','11','11','var(--om)')} Persona ${parseInt(per)+1}</span><span class="pbsb">$${its.reduce((s,i)=>s+(i.p||0),0).toFixed(2)}</span></div>`;
+    Object.values(gr).forEach(g=>{ph+=`<div class="pit"><span>${g.qty>1?g.qty+'× ':''}${g.n}</span><span>$${(g.p*g.qty).toFixed(2)}</span></div>`;});
+    ph+='</div>';
+  });
+  document.getElementById('co-personas').innerHTML=ph||'<span style="font-size:11px;color:var(--tl)">Sin detalle.</span>';
+  renderCobro();
+  switchPg('pos');showSc('sc-cobro');
+}
+
+function setProp(pct){
+  coPropina=pct;
+  document.querySelectorAll('.pbtn').forEach(b=>{const t=b.textContent.trim();b.classList.toggle('on',pct===0?t==='Sin propina':t===pct+'%');});
+  renderCobro();
+}
+function chDiv(d){coDivider=Math.max(1,Math.min(20,coDivider+d));document.getElementById('div-val').textContent=coDivider;renderCobro();}
+function renderCobro(){
+  if(!cobroPedido)return;
+  const sub=parseFloat(cobroPedido.subtotal||0);
+  const prop=parseFloat((sub*coPropina/100).toFixed(2));
+  const total=parseFloat((sub+prop).toFixed(2));
+  document.getElementById('co-pnote').textContent=coPropina>0?`Propina ${coPropina}%: $${prop.toFixed(2)}`:'';
+  document.getElementById('co-totals').innerHTML=`
+    <div class="tot-row"><span>Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+    ${coPropina>0?`<div class="tot-row"><span>Propina ${coPropina}%</span><span>$${prop.toFixed(2)}</span></div>`:''}
+    <div class="tot-row grand"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+  document.getElementById('co-total-big').textContent=`$${total.toFixed(2)}`;
+  document.getElementById('div-amt').textContent=coDivider>1?`$${(total/coDivider).toFixed(2)} c/u`:'—';
+}
+
+async function cobrarPedido(){
+  if(!cobroPedido)return;
+  const sub=parseFloat(cobroPedido.subtotal||0);
+  const prop=parseFloat((sub*coPropina/100).toFixed(2));
+  const total=parseFloat((sub+prop).toFixed(2));
+  updPedLocal(cobroPedido.id,{estado:'pagado',propina_pct:coPropina,propina_monto:prop,total});
+  try{
+    await sheetPost({action:'actualizar_estado',id:cobroPedido.id,estado:'pagado',notas:`Propina ${coPropina}% ($${prop.toFixed(2)}) | Total: $${total.toFixed(2)}`});
+  }catch(e){}
+  showToast('Pedido marcado como pagado','ok');
+  updNavCnt();updMesas();cobroPedido=null;
+  switchPg('gest');cargarPedidos();
+}
+
+function volverAGestion(){switchPg('gest');cargarPedidos();}
+function soloEditar(){
+  // Restaurar la sesión del pedido para edición
+  if(!cobroPedido)return;
+  const ped=cobroPedido;
+  S.mesa=ped.mesa;S.personas=ped.personas;
+  S.orders=JSON.parse(JSON.stringify(ped.items||{}));
+  S.curP=0;saveS();showBadge();
+  // Marcar mesa seleccionada
+  document.querySelectorAll('.mbtn').forEach((b,i)=>b.classList.toggle('sel',i+1===ped.mesa));
+  document.getElementById('pval').textContent=S.personas;
+  renderPtabs();renderCtabs();renderItems();renderCart();
+  switchPg('pos');showSc('sc-order');
+  showToast('Pedido abierto para edición','ok');
+}
+
+/* ── GESTIÓN ── */
+function setFilt(f){
+  filtro=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('on',b.dataset.f===f));
+  renderPedidos();
+}
+async function cargarPedidos(){
+  const el=document.getElementById('ped-list');
+  el.innerHTML=`<div class="gld">${si('iref','14','14','var(--om)')} Cargando...</div>`;
+  const local=loadPeds();
+  try{
+    const r=await fetch(SHEET+'?data='+encodeURIComponent(JSON.stringify({action:'obtener_pedidos'})));
+    const d=await r.json();
+    if(d.ok&&d.pedidos){
+      const mp={};d.pedidos.forEach(p=>mp[p.id]=p);
+      local.forEach(p=>{
+        if(!mp[p.id])mp[p.id]=p;
+        else mp[p.id]={...mp[p.id],...p};
+      });
+      pedidos=Object.values(mp).sort((a,b)=>(b.id||'').localeCompare(a.id||''));
+      savePeds(pedidos);
+    } else pedidos=local;
+  }catch(e){pedidos=local;}
+  updNavCnt();updMesas();renderPedidos();
+}
+function renderPedidos(){
+  const el=document.getElementById('ped-list');
+  let list=pedidos;
+  if(filtro!=='todos')list=list.filter(p=>p.estado===filtro);
+  if(!list.length){
+    el.innerHTML=`<div class="gemp">${si('ireceipt','34','34','var(--mid)')}<span>No hay pedidos${filtro==='todos'?'':' con estado "'+filtro+'"'}</span></div>`;
+    return;
+  }
+  el.innerHTML=list.map(p=>{
+    const its=p.items||{};let pitm='';
+    Object.entries(its).forEach(([per,arr])=>{
+      if(!arr||!arr.length)return;
+      const gr={};arr.forEach(it=>{gr[it.n]=gr[it.n]||{qty:0};gr[it.n].qty++;});
+      pitm+=`<div class="pitp"><strong>Persona ${parseInt(per)+1}:</strong> ${Object.entries(gr).map(([n,v])=>v.qty>1?`${v.qty}× ${n}`:n).join(', ')}</div>`;
+    });
+    const tot=parseFloat(p.total||p.subtotal||0).toFixed(2);
+    const est=p.estado||'abierto';
+    // Botones según estado
+    let bts='';
+    if(est==='abierto'){
+      bts+=`<button class="pab cobrar" onclick="abrirCobro(pedidos.find(x=>x.id==='${p.id}'))">${si('icash','11','11','currentColor')} Cobrar</button>`;
+    }
+    if(est!=='pagado') bts+=`<button class="pab pay" onclick="cambEst('${p.id}','pagado')">${si('ichk','11','11','currentColor')} Pagado</button>`;
+    if(est!=='cerrado') bts+=`<button class="pab cls" onclick="cambEst('${p.id}','cerrado')">${si('ix','11','11','currentColor')} Cerrar</button>`;
+    if(est!=='abierto') bts+=`<button class="pab open" onclick="cambEst('${p.id}','abierto')">${si('iref','11','11','currentColor')} Reabrir</button>`;
+    return `<div class="pcard">
+      <div class="pch ${est}">
+        <div>
+          <div class="pcmesa">Mesa ${p.mesa}</div>
+          <div class="pcmeta">${si('ipeople','10','9','currentColor')} ${p.personas} pers. &nbsp;·&nbsp; ${p.fecha||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="pctot">$${tot}</span>
+          <span class="ebdg ${est}">${est}</span>
+        </div>
+      </div>
+      <div class="pcb">
+        <div class="pitl">${pitm}</div>
+        ${p.notas?`<div class="pnotas">${si('inote','9','9','var(--tl)')} ${p.notas}</div>`:''}
+        <div style="font-size:9px;color:var(--tl);margin-bottom:8px">
+          Subtotal: $${parseFloat(p.subtotal||0).toFixed(2)}
+          ${p.propina_pct>0?` · Propina ${p.propina_pct}% ($${parseFloat(p.propina_monto||0).toFixed(2)})`:''}
+        </div>
+        <div class="pacts">${bts}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function cambEst(id,estado){
+  updPedLocal(id,{estado});
+  pedidos=loadPeds();
+  renderPedidos();updNavCnt();updMesas();
+  showToast(`Pedido marcado como ${estado}`,'ok');
+  try{await sheetPost({action:'actualizar_estado',id,estado});}catch(e){}
+}
+function updNavCnt(){
+  const n=loadPeds().filter(p=>p.estado==='abierto').length;
+  document.getElementById('nav-cnt').textContent=n;
+}
+
+/* ── PAGE / SCREEN ── */
+function switchPg(pg){
+  curPage=pg;
+  document.getElementById('pg-pos').classList.toggle('on',pg==='pos');
+  document.getElementById('pg-gest').classList.toggle('on',pg==='gest');
+  document.getElementById('nav-pos').classList.toggle('on',pg==='pos');
+  document.getElementById('nav-gest').classList.toggle('on',pg==='gest');
+  if(pg==='gest')cargarPedidos();
+}
+function showSc(id){
+  document.querySelectorAll('#pg-pos .sc').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function goSetup(){showSc('sc-setup');document.getElementById('hbadge').classList.remove('on');}
+function goOrder(){showSc('sc-order');renderPtabs();renderItems();renderCart();}
+function goResumen(){renderResumen();showSc('sc-resumen');}
+function renderResumen(){
+  const sub=allTot();
+  document.getElementById('rs-banner').innerHTML=`
+    <div class="rsbanner-l"><div class="rsbanner-mesa">Mesa ${S.mesa}</div><div class="rsbanner-meta">${si('ipeople','12','11','rgba(255,255,255,0.75)')} ${S.personas} personas</div></div>
+    <div class="rsbanner-r"><div class="rsbanner-total">$${sub.toFixed(2)}</div><div class="rsbanner-sub">subtotal sin propina</div></div>`;
+  let ph='';
+  for(let i=0;i<S.personas;i++){
+    const its=S.orders[i]||[];if(!its.length)continue;
+    const gr={};its.forEach(it=>{gr[it.n]=gr[it.n]||{...it,qty:0};gr[it.n].qty++;});
+    ph+=`<div class="pblk"><div class="pbhd"><span class="pbnm">${si('iperson','11','11','var(--om)')} Persona ${i+1}</span><span class="pbsb">$${pTot(i).toFixed(2)}</span></div>`;
+    Object.values(gr).forEach(g=>{ph+=`<div class="pit"><span>${g.qty>1?g.qty+'× ':''}${g.n}</span><span>$${(g.p*g.qty).toFixed(2)}</span></div>`;});
+    ph+='</div>';
+  }
+  document.getElementById('rs-personas').innerHTML=ph||'<span style="font-size:11px;color:var(--tl)">Sin platos.</span>';
+  const btn=document.getElementById('save-btn');
+  btn.disabled=false;btn.innerHTML=`${si('isheet','14','14','#fff')} Registrar pedido`;
+  document.getElementById('sstatus').textContent='';
+  document.getElementById('sstatus').className='sstatus';
+}
+function newSession(){
+  try{localStorage.removeItem(LSS);}catch(e){}
+  S={mesa:null,personas:2,curP:0,orders:{},cat:'Estrella Dorada'};
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('pval').textContent='2';
+  document.getElementById('start-btn').disabled=true;
+  document.getElementById('hbadge').classList.remove('on');
+  updMesas();showSc('sc-setup');
+}
+
+/* ── MODAL ── */
+function openModal(item){
+  pendItem=item;
+  document.getElementById('mod-nm').textContent=item.n;
+  document.getElementById('mod-inp').value='';
+  document.getElementById('pmodal').classList.add('on');
+  setTimeout(()=>document.getElementById('mod-inp').focus(),120);
+}
+function closeModal(){document.getElementById('pmodal').classList.remove('on');pendItem=null;}
+function confirmModal(){
+  const v=parseFloat(document.getElementById('mod-inp').value);
+  if(isNaN(v)||v<0){document.getElementById('mod-inp').focus();return;}
+  if(pendItem)addItem({...pendItem,p:v});closeModal();
+}
+document.getElementById('mod-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmModal();if(e.key==='Escape')closeModal();});
+document.getElementById('pmodal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+/* ── TOAST ── */
+let tTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  const ico=type==='ok'?si('ichk','12','12','#fff'):type==='er'?si('ix','12','12','#fff'):'';
+  t.innerHTML=ico+msg;t.className='toast'+(type?' '+type:'');
+  requestAnimationFrame(()=>t.classList.add('on'));
+  clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('on'),3200);
+}
+
+/* ── INIT ── */
+renderCtabs();updNavCnt();updMesas();
+if(loadS()){
+  showBadge();
+  if(S.mesa)document.querySelectorAll('.mbtn').forEach((b,i)=>{if(i+1===S.mesa)b.classList.add('sel');});
+  document.getElementById('pval').textContent=S.personas;
+  document.getElementById('start-btn').disabled=false;
+  renderPtabs();renderCtabs();renderItems();renderCart();
+  showSc('sc-order');
+  showToast('Sesión anterior restaurada','ok');
+}
+</script>
+
+<div class="footer">
+  <span class="footer-brand">FoodTech by DGP GROUP USA</span>
+  <span class="footer-sep">·</span>
+  <span class="footer-txt">Todos los derechos reservados</span>
+  <span class="footer-sep">·</span>
+  <a class="footer-link" href="https://foodtechdgp.com" target="_blank">foodtechdgp.com</a>
+</div>
+
+</body>
+</html>
