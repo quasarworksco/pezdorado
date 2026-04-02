@@ -75,6 +75,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--tx);he
 .sbtn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(180,80,10,0.5)}
 .sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
 
+/* ── BACK BAR ── */
+.back-bar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--ol);border-bottom:1px solid var(--bs);flex-shrink:0;gap:8px}
+.back-bar-btn{display:flex;align-items:center;gap:5px;background:none;border:none;color:var(--od);font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;padding:4px 6px;border-radius:var(--r1);transition:background .15s}
+.back-bar-btn:hover{background:var(--mid)}
+.back-bar-title{font-size:11px;font-weight:600;color:var(--tm)}
+
 /* ── ORDER ── */
 .ptabs{display:flex;overflow-x:auto;background:var(--w);border-bottom:1.5px solid var(--bs);flex-shrink:0}
 .ptabs::-webkit-scrollbar{height:0}
@@ -348,6 +354,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--tx);he
 
   <!-- SC: ORDER -->
   <div class="sc" id="sc-order">
+    <div class="back-bar">
+      <button class="back-bar-btn" onclick="goSetup()">
+        <svg width="12" height="12" color="currentColor"><use href="#iarrl"/></svg>
+        Volver a mesas
+      </button>
+      <span class="back-bar-title" id="back-bar-title"></span>
+    </div>
     <div class="ptabs" id="ptabs"></div>
     <div class="omn">
       <div class="mpnl">
@@ -365,8 +378,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--tx);he
       </div>
     </div>
     <div class="abar">
-      <button class="abtn" onclick="goSetup()"><svg width="12" height="12" color="currentColor"><use href="#iarrl"/></svg>Mesa</button>
-      <button class="pbtn2" onclick="goResumen()">
+      <button class="pbtn2" style="flex:1" onclick="goResumen()">
         <svg width="12" height="12" color="#fff"><use href="#ireceipt"/></svg>
         Revisar y Guardar
         <svg width="12" height="12" color="#fff"><use href="#iarr"/></svg>
@@ -540,6 +552,7 @@ const MENU = {
 /* ── STATE ── */
 let S = {mesa:null,personas:2,curP:0,orders:{},cat:"Estrella Dorada"};
 let cobroPedido = null; // pedido abierto en pantalla de cobro
+let pedidoEditandoId = null; // id del pedido que se está editando (null = pedido nuevo)
 let coPropina = 0;
 let coDivider = 1;
 let pedidos = [];
@@ -596,7 +609,10 @@ function startOrder(){
 }
 function showBadge(){
   document.getElementById('hbadge').classList.add('on');
-  document.getElementById('badge-txt').textContent=`Mesa ${S.mesa} · ${S.personas} pers.`;
+  const txt=`Mesa ${S.mesa} · ${S.personas} personas`;
+  document.getElementById('badge-txt').textContent=txt;
+  const bb=document.getElementById('back-bar-title');
+  if(bb) bb.textContent=txt;
 }
 
 /* ── PERSONA TABS ── */
@@ -686,10 +702,12 @@ function goResumen(){
   document.getElementById('rs-personas').innerHTML=ph||'<span style="font-size:11px;color:var(--tl)">Sin platos agregados.</span>';
   // Reset save btn
   const btn=document.getElementById('save-btn');
-  btn.disabled=false;btn.innerHTML=`${si('isheet','14','14','#fff')} Registrar pedido`;
-  document.getElementById('sstatus').textContent='';
-  document.getElementById('sstatus').className='sstatus';
-  document.getElementById('notas-inp').value='';
+  btn.disabled=false;
+  const lbl2=pedidoEditandoId?'Actualizar pedido':'Registrar pedido';
+  btn.innerHTML=`${si('isheet','14','14','#fff')} ${lbl2}`;
+  document.getElementById('sstatus').textContent=pedidoEditandoId?'Modo edición: actualizará el pedido existente':'';
+  document.getElementById('sstatus').className=pedidoEditandoId?'sstatus ld':'sstatus';
+  document.getElementById('notas-inp').value=''
 }
 
 /* ── SHEETS HELPER ── */
@@ -708,7 +726,7 @@ async function guardarPedido(){
   const st=document.getElementById('sstatus');
   btn.disabled=true;
   st.textContent='Enviando a Google Sheets...';st.className='sstatus ld';
-  const id=`PD-${S.mesa}-${Date.now()}`;
+  const id = pedidoEditandoId || `PD-${S.mesa}-${Date.now()}`;
   const ped={
     id,fecha:now(),mesa:S.mesa,personas:S.personas,
     items:JSON.parse(JSON.stringify(S.orders)),
@@ -717,11 +735,14 @@ async function guardarPedido(){
   };
   addPedLocal(ped);updMesas();updNavCnt();
   try{
-    const d=await sheetPost({action:'crear_pedido',...ped});
+    const action = pedidoEditandoId ? 'actualizar_pedido' : 'crear_pedido';
+    const d=await sheetPost({action,...ped});
     if(d.ok){
-      st.textContent='Pedido registrado en Sheets.';st.className='sstatus ok';
-      btn.innerHTML=`${si('ichk','14','14','#fff')} Registrado`;
-      showToast('Pedido guardado en Sheets','ok');
+      const wasEdit = !!pedidoEditandoId;
+      pedidoEditandoId=null;
+      st.textContent=wasEdit?'Pedido actualizado en Sheets.':'Pedido registrado en Sheets.';st.className='sstatus ok';
+      btn.innerHTML=`${si('ichk','14','14','#fff')} ${wasEdit?'Actualizado':'Registrado'}`;
+      showToast(wasEdit?'Pedido actualizado en Sheets':'Pedido guardado en Sheets','ok');
     } else throw new Error(d.error||'Error en Sheets');
   }catch(e){
     console.error('Sheets error:',e);
@@ -794,18 +815,17 @@ async function cobrarPedido(){
 
 function volverAGestion(){switchPg('gest');cargarPedidos();}
 function soloEditar(){
-  // Restaurar la sesión del pedido para edición
   if(!cobroPedido)return;
   const ped=cobroPedido;
+  pedidoEditandoId=ped.id; // guardamos el id para sobrescribir, no crear nuevo
   S.mesa=ped.mesa;S.personas=ped.personas;
   S.orders=JSON.parse(JSON.stringify(ped.items||{}));
   S.curP=0;saveS();showBadge();
-  // Marcar mesa seleccionada
   document.querySelectorAll('.mbtn').forEach((b,i)=>b.classList.toggle('sel',i+1===ped.mesa));
   document.getElementById('pval').textContent=S.personas;
   renderPtabs();renderCtabs();renderItems();renderCart();
   switchPg('pos');showSc('sc-order');
-  showToast('Pedido abierto para edición','ok');
+  showToast('Editando pedido de Mesa '+ped.mesa,'ok');
 }
 
 /* ── GESTIÓN ── */
@@ -906,7 +926,7 @@ function showSc(id){
   document.querySelectorAll('#pg-pos .sc').forEach(s=>s.classList.remove('on'));
   document.getElementById(id).classList.add('on');
 }
-function goSetup(){showSc('sc-setup');document.getElementById('hbadge').classList.remove('on');}
+function goSetup(){pedidoEditandoId=null;showSc('sc-setup');document.getElementById('hbadge').classList.remove('on');}
 function goOrder(){showSc('sc-order');renderPtabs();renderItems();renderCart();}
 function goResumen(){renderResumen();showSc('sc-resumen');}
 function renderResumen(){
@@ -924,13 +944,16 @@ function renderResumen(){
   }
   document.getElementById('rs-personas').innerHTML=ph||'<span style="font-size:11px;color:var(--tl)">Sin platos.</span>';
   const btn=document.getElementById('save-btn');
-  btn.disabled=false;btn.innerHTML=`${si('isheet','14','14','#fff')} Registrar pedido`;
-  document.getElementById('sstatus').textContent='';
-  document.getElementById('sstatus').className='sstatus';
+  btn.disabled=false;
+  const lbl=pedidoEditandoId?'Actualizar pedido':'Registrar pedido';
+  btn.innerHTML=`${si('isheet','14','14','#fff')} ${lbl}`;
+  document.getElementById('sstatus').textContent=pedidoEditandoId?'Modo edición: actualizará el pedido existente':'';
+  document.getElementById('sstatus').className=pedidoEditandoId?'sstatus ld':'sstatus';
 }
 function newSession(){
   try{localStorage.removeItem(LSS);}catch(e){}
   S={mesa:null,personas:2,curP:0,orders:{},cat:'Estrella Dorada'};
+  pedidoEditandoId=null;
   document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('pval').textContent='2';
   document.getElementById('start-btn').disabled=true;
