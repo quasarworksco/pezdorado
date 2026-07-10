@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel Admin — Pez Dorado</title>
+<style>
+  :root{
+    --bg:#0f1417; --panel:#161c20; --panel2:#1c2429; --border:#2a343a;
+    --text:#e9eef0; --muted:#8fa0a8; --orange:#f47b20; --orange-dark:#d9660f;
+    --green:#26b56a; --red:#e05a5a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+  a{color:var(--orange)}
+  .wrap{max-width:920px;margin:0 auto;padding:1.25rem}
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+  header.top h1{font-size:1.2rem;margin:0;display:flex;align-items:center;gap:.5rem}
+  header.top h1 .dot{width:10px;height:10px;border-radius:50%;background:var(--orange)}
+  .muted{color:var(--muted)}
+  .btn{border:0;border-radius:9px;padding:.6rem 1rem;font-size:.9rem;font-weight:600;cursor:pointer;background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+  .btn:hover{border-color:var(--orange)}
+  .btn.primary{background:var(--orange);color:#fff;border-color:var(--orange)}
+  .btn.primary:hover{background:var(--orange-dark)}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--red);border-color:transparent;padding:.4rem .55rem}
+  .btn.danger:hover{border-color:var(--red)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .field label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.35rem}
+  input,select{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:.6rem .7rem;font-size:.92rem}
+  input:focus,select:focus{outline:none;border-color:var(--orange)}
+
+  .notice{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:9px;padding:.7rem .9rem;font-size:.88rem;margin-bottom:1rem}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.1rem}
+  .card > h2{margin:0 0 .2rem;font-size:1.02rem}
+  .card > .cat-key{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+  table{width:100%;border-collapse:collapse;margin-top:.6rem}
+  th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:.3rem .4rem}
+  td{padding:.25rem .4rem;vertical-align:middle}
+  td input[type=text]{min-width:120px}
+  .price-cell{display:flex;align-items:center;gap:.25rem}
+  .price-cell span{color:var(--orange);font-weight:700}
+  td input.price{width:90px}
+  td.flags{white-space:nowrap;font-size:.8rem;color:var(--muted)}
+  td.flags label{display:inline-flex;align-items:center;gap:.25rem;margin-right:.6rem}
+  td input[type=checkbox]{width:auto}
+  .tbl-wrap{overflow-x:auto}
+  .add-row{margin-top:.55rem}
+  .special-grid{display:grid;grid-template-columns:1fr 90px;gap:.7rem}
+  .special-grid .full{grid-column:1 / -1}
+  .savebar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:1rem 0 .4rem;display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
+  .save-status{font-size:.86rem}
+  .save-status.ok{color:var(--green)}
+  .save-status.bad{color:var(--red)}
+  @media(max-width:560px){ td input[type=text]{min-width:90px} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1><span class="dot"></span> Menú &amp; Precios — Pez Dorado</h1>
+    <a class="btn ghost" href="index.html" target="_blank" rel="noopener">Ver página pública ↗</a>
+  </header>
+
+  <div class="notice" id="seedNotice" style="display:none">
+    Aún no hay menú guardado en Firestore. Se cargaron los valores por defecto — pulsa
+    <strong>Guardar cambios</strong> para crearlo.
+  </div>
+
+  <!-- Especialidad -->
+  <div class="card">
+    <h2>⭐ Especialidad de la Casa</h2>
+    <div class="special-grid" style="margin-top:.7rem">
+      <div class="field" style="margin:0">
+        <label>Nombre</label>
+        <input type="text" id="spName">
+      </div>
+      <div class="field" style="margin:0">
+        <label>Precio ($)</label>
+        <input type="number" step="0.5" min="0" id="spPrice" class="price">
+      </div>
+      <div class="field full" style="margin:0">
+        <label>Descripción</label>
+        <input type="text" id="spDesc">
+      </div>
+    </div>
+  </div>
+
+  <!-- Categorías (generadas por JS) -->
+  <div id="categories"></div>
+
+  <div class="savebar">
+    <button class="btn primary" id="saveBtn">Guardar cambios</button>
+    <button class="btn ghost" id="reloadBtn">Descartar y recargar</button>
+    <span class="save-status" id="saveStatus"></span>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKzXw3nC9WbzMBhdxsp1RO0dwn2bQUebc",
+    authDomain: "pezdoradoadmin-ab399.firebaseapp.com",
+    projectId: "pezdoradoadmin-ab399",
+    storageBucket: "pezdoradoadmin-ab399.firebasestorage.app",
+    messagingSenderId: "291257543457",
+    appId: "1:291257543457:web:332dbc33841b83a78c2c60"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const MENU_REF = doc(db, "menu", "current");
+
+  // ---- Catálogo de iconos (igual que index.html) ----
+  const ICON_OPTIONS = [
+    "banana","lemon","shrimp","bowl","crab","wave","avocado","leaf","drumstick",
+    "steak","fish","pasta","rice","milk","potato","cheese","plant","drop","drink",
+    "coconut","star","egg","dot"
+  ];
+
+  // Orden y etiquetas de las categorías (igual que index.html)
+  const CAT_LABELS = {
+    entradas:"Entradas", sopas:"Sopas y Cremas", ensaladas:"Ensaladas",
+    aves:"Aves", carnes:"Carnes", delmar:"Del Mar", pastas:"Pastas",
+    contornos:"Contornos", bebidas:"Bebidas"
+  };
+
+  // ---- Menú por defecto (respaldo / semilla inicial) ----
+  const DEFAULT_MENU = {
+    entradas: [
+      { name:"Canasta de Plátano", price:6,   icon:"banana" },
+      { name:"Ceviche",            price:10,  icon:"lemon" },
+      { name:"Cóctel de Camarón",  price:9,   icon:"shrimp" },
+    ],
+    sopas: [
+      { name:"Crema de Chipichipi", price:4,  icon:"bowl" },
+      { name:"Chupe de Camarón",    price:8,  icon:"shrimp" },
+      { name:"Sopa de Mariscos",    price:8,  icon:"wave" },
+      { name:"Sopa de Cangrejo",    price:5,  icon:"crab" },
+    ],
+    ensaladas: [
+      { name:"Aguacate Relleno",    price:8,   icon:"avocado" },
+      { name:"Ensalada de Aguacate",price:4,   icon:"avocado" },
+      { name:"Ensalada de Camarón", price:7,   icon:"shrimp" },
+      { name:"Ensalada César",      price:4,   icon:"leaf" },
+      { name:"Ensalada Coleslaw",   price:1.5, icon:"leaf" },
+      { name:"Ensalada Rusa",       price:2,   icon:"leaf" },
+    ],
+    aves: [
+      { name:"Churrasco de Pollo",  price:8, icon:"drumstick", contorno:true },
+      { name:"Cordon Bleu",         price:9, icon:"drumstick", contorno:true },
+      { name:"Milanesa de Pollo",   price:7, icon:"drumstick", contorno:true },
+      { name:"Pollo a la Plancha",  price:6, icon:"drumstick", contorno:true },
+      { name:"Pollo Frito",         price:7, icon:"drumstick", contorno:true },
+      { name:"Pollo Light",         price:7, icon:"leaf",      contorno:true },
+      { name:"Tenders de Pollo",    price:7, icon:"drumstick", contorno:true },
+    ],
+    carnes: [
+      { name:"Bistec",              price:5,  icon:"steak", contorno:true },
+      { name:"Lomo 300gr",          price:8,  icon:"steak", contorno:true },
+      { name:"Lomo 300gr Especial", price:12, icon:"steak", contorno:true },
+      { name:"Lomo Salteado",       price:9,  icon:"steak", contorno:true },
+      { name:"Puerco",              price:5,  icon:"steak", contorno:true },
+    ],
+    delmar: [
+      { name:"Arroz a la Marinera",    price:12, icon:"shrimp", contorno:true },
+      { name:"Camarón Rebosado",       price:8,  icon:"shrimp", contorno:true },
+      { name:"Camarón al Termidor",    price:10, icon:"shrimp", contorno:true },
+      { name:"Cazuela de Mariscos",    price:12, icon:"wave",   contorno:true },
+      { name:"Camarón al Ajillo",      price:8,  icon:"shrimp", contorno:true },
+      { name:"Curvina Grande",         price:14, icon:"fish",   contorno:true },
+      { name:"Curvina Mediana",        price:8,  icon:"fish",   contorno:true },
+      { name:"Servicio de Curvina",    price:7,  icon:"fish",   contorno:true },
+      { name:"Bocachico",              price:6,  icon:"fish",   contorno:true },
+      { name:"Bocachico Relleno",      price:11, icon:"fish",   contorno:true },
+      { name:"Filet Relleno Especial", price:12, icon:"fish",   contorno:true },
+      { name:"Filet a la Plancha",     price:8,  icon:"fish",   contorno:true },
+      { name:"Filet al Ajillo",        price:10, icon:"fish",   contorno:true },
+      { name:"Filet a la Meniel",      price:12, icon:"fish",   contorno:true },
+      { name:"Filet de Churrasco",     price:10, icon:"fish",   contorno:true },
+      { name:"Huevas",                 price:9,  icon:"egg",    contorno:true },
+      { name:"La Taberna Dorada",      price:27, icon:"star",   contorno:true },
+      { name:"Lebranche",              price:12, icon:"fish",   contorno:true },
+      { name:"Mojito en Coco",         price:7,  icon:"coconut",contorno:true },
+      { name:"Pargo Rojo",             price:10, icon:"fish",   contorno:true },
+      { name:"Robalo Filet",           price:10, icon:"fish",   contorno:true },
+    ],
+    pastas: [
+      { name:"Pasta con Camarones", price:7,  icon:"pasta" },
+      { name:"Pasta con Filet",     price:7,  icon:"pasta" },
+      { name:"Pasta con Lomo",      price:10, icon:"pasta" },
+      { name:"Pasta con Pollo",     price:7,  icon:"pasta" },
+      { name:"Tallarín Mixto",      price:12, icon:"pasta" },
+    ],
+    contornos: [
+      { name:"Arroz",      price:1,   icon:"rice" },
+      { name:"Nata",       price:1,   icon:"milk" },
+      { name:"Papas",      price:2,   icon:"potato" },
+      { name:"Patacón",    price:1.5, icon:"banana" },
+      { name:"Queso Frito",price:2,   icon:"cheese" },
+      { name:"Tajadas",    price:2,   icon:"banana" },
+      { name:"Yuca Frita", price:1.5, icon:"plant" },
+    ],
+    bebidas: [
+      { name:"Agua / Agua de Coco / Coca-Cola / Pepsi", price:null, icon:"drop",  noPrice:true },
+      { name:"Jugos Naturales — Fresa, Limón, Mora, Parchita, Piña", price:2,   icon:"drink" },
+      { name:"Gaseosas Golden — 7up, Piña, Colita, Orange, Uvita",   price:1.5, icon:"drink" },
+    ],
+  };
+  const DEFAULT_SPECIAL = {
+    name: "Estrella Dorada",
+    desc: "Ceviche · Croquetas de pescado · Camarón rebosado · Cóctel de camarón · Camarón al Termidor · Camarón al ajillo",
+    price: 35,
+  };
+
+  // ---------- Estado en memoria del editor ----------
+  let state = { categories: {}, special: {} };
+  const el = (id) => document.getElementById(id);
+
+  // ================= CARGA =================
+  async function loadMenu() {
+    setStatus("Cargando…");
+    try {
+      const snap = await getDoc(MENU_REF);
+      if (snap.exists()) {
+        const d = snap.data();
+        state.categories = d.categories || {};
+        state.special = Object.assign({}, DEFAULT_SPECIAL, d.special || {});
+        el("seedNotice").style.display = "none";
+      } else {
+        state.categories = structuredClone(DEFAULT_MENU);
+        state.special = Object.assign({}, DEFAULT_SPECIAL);
+        el("seedNotice").style.display = "block";
+      }
+      renderEditor();
+      setStatus("");
+    } catch (err) {
+      setStatus("Error al cargar: " + (err.code || err.message), "bad");
+    }
+  }
+
+  // ================= RENDER DEL EDITOR =================
+  function renderEditor() {
+    el("spName").value = state.special.name || "";
+    el("spDesc").value = state.special.desc || "";
+    el("spPrice").value = state.special.price ?? "";
+
+    const cont = el("categories");
+    cont.innerHTML = "";
+
+    const known = Object.keys(CAT_LABELS);
+    const extra = Object.keys(state.categories).filter(k => !known.includes(k));
+    const order = [...known.filter(k => state.categories[k]), ...extra];
+
+    order.forEach(cat => {
+      const items = state.categories[cat] || [];
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="cat-key">${cat}</div>
+        <h2>${CAT_LABELS[cat] || cat}</h2>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Plato</th><th>Precio</th><th>Icono</th><th>Opciones</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button class="btn ghost add-row" type="button">+ Agregar plato</button>
+      `;
+      const tbody = card.querySelector("tbody");
+      items.forEach((item, idx) => tbody.appendChild(itemRow(cat, item, idx)));
+      card.querySelector(".add-row").addEventListener("click", () => {
+        state.categories[cat].push({ name:"", price:0, icon:"dot" });
+        renderEditor();
+      });
+      cont.appendChild(card);
+    });
+  }
+
+  function itemRow(cat, item, idx) {
+    const tr = document.createElement("tr");
+
+    // Nombre
+    const tdName = document.createElement("td");
+    const inName = mkInput("text", item.name || "");
+    inName.addEventListener("input", () => item.name = inName.value);
+    tdName.appendChild(inName);
+
+    // Precio
+    const tdPrice = document.createElement("td");
+    const wrap = document.createElement("div");
+    wrap.className = "price-cell";
+    const sign = document.createElement("span"); sign.textContent = "$";
+    const inPrice = mkInput("number", item.noPrice ? "" : (item.price ?? ""));
+    inPrice.className = "price"; inPrice.step = "0.5"; inPrice.min = "0";
+    inPrice.disabled = !!item.noPrice;
+    inPrice.addEventListener("input", () => {
+      item.price = inPrice.value === "" ? null : Number(inPrice.value);
+    });
+    wrap.appendChild(sign); wrap.appendChild(inPrice);
+    tdPrice.appendChild(wrap);
+
+    // Icono
+    const tdIcon = document.createElement("td");
+    const sel = document.createElement("select");
+    ICON_OPTIONS.forEach(ic => {
+      const o = document.createElement("option");
+      o.value = ic; o.textContent = ic;
+      if (ic === item.icon) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", () => item.icon = sel.value);
+    tdIcon.appendChild(sel);
+
+    // Opciones (contorno / consultar precio)
+    const tdFlags = document.createElement("td");
+    tdFlags.className = "flags";
+    const contLbl = mkCheck("Con contorno", !!item.contorno, (v) => item.contorno = v || undefined);
+    const noPriceLbl = mkCheck("Consultar", !!item.noPrice, (v) => {
+      item.noPrice = v || undefined;
+      inPrice.disabled = v;
+      if (v) { item.price = null; inPrice.value = ""; }
+    });
+    tdFlags.appendChild(contLbl); tdFlags.appendChild(noPriceLbl);
+
+    // Eliminar
+    const tdDel = document.createElement("td");
+    const del = document.createElement("button");
+    del.className = "btn danger"; del.type = "button"; del.textContent = "✕";
+    del.title = "Eliminar plato";
+    del.addEventListener("click", () => {
+      state.categories[cat].splice(idx, 1);
+      renderEditor();
+    });
+    tdDel.appendChild(del);
+
+    tr.append(tdName, tdPrice, tdIcon, tdFlags, tdDel);
+    return tr;
+  }
+
+  function mkInput(type, val) {
+    const i = document.createElement("input");
+    i.type = type; i.value = val;
+    return i;
+  }
+  function mkCheck(label, checked, onChange) {
+    const l = document.createElement("label");
+    const c = document.createElement("input");
+    c.type = "checkbox"; c.checked = checked;
+    c.addEventListener("change", () => onChange(c.checked));
+    l.appendChild(c); l.appendChild(document.createTextNode(label));
+    return l;
+  }
+
+  // ================= GUARDAR =================
+  el("saveBtn").addEventListener("click", save);
+  el("reloadBtn").addEventListener("click", loadMenu);
+
+  async function save() {
+    state.special.name = el("spName").value.trim();
+    state.special.desc = el("spDesc").value.trim();
+    state.special.price = el("spPrice").value === "" ? 0 : Number(el("spPrice").value);
+
+    // Limpia platos vacíos (sin nombre) y normaliza campos
+    const cleaned = {};
+    for (const [cat, items] of Object.entries(state.categories)) {
+      cleaned[cat] = items
+        .filter(it => (it.name || "").trim() !== "")
+        .map(it => {
+          const o = { name: it.name.trim(), icon: it.icon || "dot" };
+          if (it.noPrice) { o.noPrice = true; o.price = null; }
+          else o.price = Number(it.price) || 0;
+          if (it.contorno) o.contorno = true;
+          return o;
+        });
+    }
+
+    el("saveBtn").disabled = true;
+    setStatus("Guardando…");
+    try {
+      await setDoc(MENU_REF, {
+        categories: cleaned,
+        special: state.special,
+        updatedAt: serverTimestamp(),
+      });
+      state.categories = cleaned;
+      el("seedNotice").style.display = "none";
+      setStatus("✓ Guardado. La página pública se actualiza sola.", "ok");
+      renderEditor();
+    } catch (err) {
+      setStatus("Error al guardar: " + (err.code || err.message), "bad");
+    } finally {
+      el("saveBtn").disabled = false;
+    }
+  }
+
+  function setStatus(msg, kind) {
+    const s = el("saveStatus");
+    s.textContent = msg || "";
+    s.className = "save-status" + (kind ? " " + kind : "");
+  }
+
+  // Arranca directo en el editor (sin login)
+  loadMenu();
+</script>
+</body>
+</html>

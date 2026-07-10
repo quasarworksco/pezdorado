@@ -486,9 +486,9 @@ footer .footer-name {
   <div class="specialty-banner" onclick="addSpecial()">
     <svg class="sb-star" width="80" height="80" style="color:white"><use href="#ico-star"/></svg>
     <div class="sb-tag"><svg width="11" height="11" style="color:white"><use href="#ico-star"/></svg> Especialidad de la Casa</div>
-    <div class="sb-name">Estrella Dorada</div>
-    <div class="sb-desc">Ceviche · Croquetas de pescado · Camarón rebosado · Cóctel de camarón · Camarón al Termidor · Camarón al ajillo</div>
-    <div class="sb-price">$35.00</div>
+    <div class="sb-name" id="sbName">Estrella Dorada</div>
+    <div class="sb-desc" id="sbDesc">Ceviche · Croquetas de pescado · Camarón rebosado · Cóctel de camarón · Camarón al Termidor · Camarón al ajillo</div>
+    <div class="sb-price" id="sbPrice">$35.00</div>
   </div>
 
   <section class="menu-section" id="entradas">
@@ -628,7 +628,7 @@ function svgIcon(id, size=22) {
   return `<svg width="${size}" height="${size}" style="color:var(--orange)"><use href="${href}"/></svg>`;
 }
 
-const MENU = {
+var MENU = {
   entradas: [
     { name:"Canasta de Plátano", price:6,   icon:"banana" },
     { name:"Ceviche",            price:10,  icon:"lemon" },
@@ -710,6 +710,12 @@ const MENU = {
   ],
 };
 
+var SPECIAL = {
+  name: "Estrella Dorada",
+  desc: "Ceviche · Croquetas de pescado · Camarón rebosado · Cóctel de camarón · Camarón al Termidor · Camarón al ajillo",
+  price: 35,
+};
+
 const WHATSAPP = "+584126911048";
 let cart = {};
 const fmt = p => p !== null && p !== undefined ? "$" + Number(p).toFixed(2) : "";
@@ -743,9 +749,28 @@ function renderMenus() {
 
 function addSpecial() {
   const key = "special_estrella";
-  if (!cart[key]) cart[key] = { name:"Estrella Dorada", icon:"star", price:35, qty:0 };
-  cart[key].qty++; updateCartUI(); showToast("Estrella Dorada agregada");
+  if (!cart[key]) cart[key] = { name:SPECIAL.name, icon:"star", price:SPECIAL.price, qty:0 };
+  else cart[key].price = SPECIAL.price;
+  cart[key].qty++; updateCartUI(); showToast(SPECIAL.name + " agregada");
 }
+
+// Aplica al banner de "Especialidad de la Casa" los datos actuales de SPECIAL
+function applySpecial() {
+  const n = document.getElementById('sbName');
+  const d = document.getElementById('sbDesc');
+  const p = document.getElementById('sbPrice');
+  if (n) n.textContent = SPECIAL.name;
+  if (d) d.textContent = SPECIAL.desc;
+  if (p) p.textContent = fmt(SPECIAL.price);
+}
+
+// Punto de entrada que usa el cargador de Firestore para refrescar el menú en vivo
+window.applyMenuData = function (data) {
+  if (data && data.categories && typeof data.categories === 'object') MENU = data.categories;
+  if (data && data.special && typeof data.special === 'object') SPECIAL = Object.assign({}, SPECIAL, data.special);
+  renderMenus();
+  applySpecial();
+};
 
 function addToCart(cat, idx) {
   const key = cat + "_" + idx;
@@ -835,6 +860,35 @@ function showToast(msg) {
 }
 
 renderMenus();
+applySpecial();
+</script>
+
+<!-- Carga el menú y los precios desde Firestore (en vivo). Si falla, se usa el menú de respaldo de arriba. -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDKzXw3nC9WbzMBhdxsp1RO0dwn2bQUebc",
+    authDomain: "pezdoradoadmin-ab399.firebaseapp.com",
+    projectId: "pezdoradoadmin-ab399",
+    storageBucket: "pezdoradoadmin-ab399.firebasestorage.app",
+    messagingSenderId: "291257543457",
+    appId: "1:291257543457:web:332dbc33841b83a78c2c60"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    // Escucha en tiempo real: cualquier cambio guardado desde el panel admin se refleja al instante.
+    onSnapshot(
+      doc(db, "menu", "current"),
+      (snap) => { if (snap.exists() && window.applyMenuData) window.applyMenuData(snap.data()); },
+      (err) => console.warn("No se pudo cargar el menú desde Firestore, se usa el de respaldo:", err)
+    );
+  } catch (err) {
+    console.warn("Firebase no disponible, se usa el menú de respaldo:", err);
+  }
 </script>
 <script>
 (function(){
